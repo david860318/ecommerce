@@ -2,8 +2,9 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import CheckoutView from '../views/CheckoutView.vue'
 import OrderSuccessView from '../views/OrderSuccessView.vue'
+import ProfileView from '../views/ProfileView.vue'
 
-// 後台視圖
+// 後台
 import AdminLayout from '../views/admin/AdminLayout.vue'
 import DashboardView from '../views/admin/DashboardView.vue'
 import ProductManageView from '../views/admin/ProductManageView.vue'
@@ -11,12 +12,11 @@ import OrderManageView from '../views/admin/OrderManageView.vue'
 import MarketingCrmView from '../views/admin/MarketingCrmView.vue'
 
 const routes = [
-  // 前台顧客路由 (Storefront)
   { path: '/', name: 'home', component: HomeView },
   { path: '/checkout', name: 'checkout', component: CheckoutView },
   { path: '/success', name: 'success', component: OrderSuccessView },
+  { path: '/profile', name: 'profile', component: ProfileView },
 
-  // 後台管理路由 (Admin Portal)
   {
     path: '/admin',
     component: AdminLayout,

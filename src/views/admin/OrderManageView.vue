@@ -17,6 +17,13 @@
         >
           {{ filterMap[filter] }}
         </button>
+        <button
+  @click="exportCsv"
+  class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+>
+  <Download class="w-3.5 h-3.5" />
+  匯出訂單 CSV
+</button>
       </div>
     </div>
 
@@ -135,4 +142,29 @@ const filteredOrders = computed(() => {
   if (statusFilter.value === 'REFUNDED') return adminStore.orders.filter(o => o.paymentStatus === 'REFUNDED')
   return adminStore.orders
 })
+
+import { Download } from 'lucide-vue-next'
+
+const exportCsv = () => {
+  const headers = ['訂單編號', '下單時間', '收件人', '電話', '金額', '付款狀態', '物流方式', '託運號碼']
+  const rows = filteredOrders.value.map(o => [
+    o.id,
+    o.createdAt,
+    o.customerName,
+    o.phone,
+    o.amount,
+    o.paymentStatus,
+    o.shippingMethod,
+    o.trackingCode || '無'
+  ])
+
+  let csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers, ...rows].map(e => e.join(',')).join('\n')
+  const encodedUri = encodeURI(csvContent)
+  const link = document.createElement('a')
+  link.setAttribute('href', encodedUri)
+  link.setAttribute('download', `orders_export_${Date.now()}.csv`)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
 </script>

@@ -1,5 +1,15 @@
 <template>
-  <div class="bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-md transition flex flex-col group">
+  <div class="bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-md transition flex flex-col group relative">
+    <!-- 愛心收藏 (願望清單 AC: ST-09) -->
+    <button
+      @click.stop="handleWishlistToggle"
+      class="absolute top-3 right-3 z-10 p-2 rounded-full backdrop-blur-md transition shadow-xs"
+      :class="authStore.isInWishlist(product.id) ? 'bg-rose-50 text-rose-500' : 'bg-white/80 text-slate-400 hover:text-slate-600'"
+      aria-label="加入願望清單"
+    >
+      <Heart class="w-4 h-4" :class="{ 'fill-rose-500': authStore.isInWishlist(product.id) }" />
+    </button>
+
     <!-- 商品圖片 -->
     <div class="relative overflow-hidden aspect-square bg-slate-100 cursor-pointer" @click="openQuickView">
       <img
@@ -40,7 +50,7 @@
       </button>
     </div>
 
-    <!-- PDP 規格選擇彈窗 (AC: ST-05) -->
+    <!-- PDP 規格選擇彈窗 (AC: ST-05, ST-09) -->
     <div
       v-if="showModal"
       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs"
@@ -83,24 +93,29 @@
                 selectedSku?.skuId === sku.skuId
                   ? 'border-indigo-600 bg-indigo-50 text-indigo-700 font-bold'
                   : 'border-slate-200 text-slate-700 hover:border-slate-300',
-                sku.stock === 0 ? 'opacity-40 bg-slate-50 line-through cursor-not-allowed' : ''
+                sku.stock === 0 ? 'opacity-50 bg-slate-50' : ''
               ]"
-              :disabled="sku.stock === 0"
             >
               <span>{{ sku.color }} - {{ sku.size }}</span>
-              <span v-if="sku.stock === 0" class="text-[10px] text-rose-500 font-normal">缺貨</span>
+              <span v-if="sku.stock === 0" class="text-[10px] text-rose-500 font-semibold">缺貨</span>
             </button>
           </div>
         </div>
 
-        <!-- 加入購物車按鈕 (庫存 0 自動置灰) -->
+        <!-- 加入購物車 或 貨到通知按鈕 (AC: ST-09) -->
         <button
+          v-if="selectedSku && selectedSku.stock > 0"
           @click="handleAddToCart"
-          :disabled="!selectedSku || selectedSku.stock === 0"
-          class="w-full py-3.5 rounded-xl font-bold text-sm text-white transition"
-          :class="(!selectedSku || selectedSku.stock === 0) ? 'bg-slate-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:scale-98'"
+          class="w-full py-3.5 rounded-xl font-bold text-sm text-white bg-indigo-600 hover:bg-indigo-700 transition active:scale-98"
         >
-          {{ !selectedSku ? '請選擇款式' : selectedSku.stock === 0 ? '已售完 (補貨中)' : '加入購物車' }}
+          加入購物車
+        </button>
+        <button
+          v-else
+          @click="notifyRestock"
+          class="w-full py-3.5 rounded-xl font-bold text-sm text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 transition"
+        >
+          🔔 貨到通知我 (缺貨登記)
         </button>
       </div>
     </div>
@@ -109,8 +124,9 @@
 
 <script setup>
 import { ref } from 'vue'
-import { X } from 'lucide-vue-next'
+import { X, Heart } from 'lucide-vue-next'
 import { useCartStore } from '../stores/cartStore'
+import { useAuthStore } from '../stores/authStore'
 
 const props = defineProps({
   product: {
@@ -120,11 +136,22 @@ const props = defineProps({
 })
 
 const cartStore = useCartStore()
+const authStore = useAuthStore()
 const showModal = ref(false)
 const selectedSku = ref(props.product.skus.find(s => s.stock > 0) || props.product.skus[0])
 
 const openQuickView = () => {
   showModal.value = true
+}
+
+const handleWishlistToggle = () => {
+  const res = authStore.toggleWishlist(props.product.id)
+  alert(res.message)
+}
+
+const notifyRestock = () => {
+  alert(`已為您登記【${props.product.name} - ${selectedSku.value.color}】補貨提醒，到貨時將發送簡訊/Email 通知！`)
+  showModal.value = false
 }
 
 const handleAddToCart = () => {

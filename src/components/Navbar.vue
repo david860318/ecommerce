@@ -22,13 +22,31 @@
 
       <!-- 右側按鈕區 -->
       <div class="flex items-center gap-2">
-        <!-- 切換後台按鈕 -->
+        <!-- 會員登入 / 會員中心入口 -->
         <router-link
-          to="/admin"
+          v-if="authStore.user.isLoggedIn"
+          to="/profile"
           class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-2 rounded-xl transition flex items-center gap-1.5"
         >
+          <User class="w-3.5 h-3.5 text-indigo-600" />
+          <span>{{ authStore.user.name }}</span>
+        </router-link>
+        <button
+          v-else
+          @click="showAuthModal = true"
+          class="text-xs border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold px-3 py-2 rounded-xl transition flex items-center gap-1.5"
+        >
+          <User class="w-3.5 h-3.5" />
+          <span>登入</span>
+        </button>
+
+        <!-- 管理後台按鈕 -->
+        <router-link
+          to="/admin"
+          class="text-xs bg-slate-900 hover:bg-slate-800 text-white font-semibold px-3 py-2 rounded-xl transition flex items-center gap-1.5"
+        >
           <Settings class="w-3.5 h-3.5" />
-          <span>管理後台</span>
+          <span>後台</span>
         </router-link>
 
         <!-- 購物車觸發按鈕 -->
@@ -47,14 +65,22 @@
         </button>
       </div>
     </div>
+
+    <!-- 登入彈窗 -->
+    <AuthModal :is-open="showAuthModal" @close="showAuthModal = false" />
   </header>
 </template>
 
 <script setup>
-import { ShoppingBag, Search, Settings } from 'lucide-vue-next'
+import { ref } from 'vue'
+import { ShoppingBag, Search, Settings, User } from 'lucide-vue-next'
 import { useProductStore } from '../stores/productStore'
 import { useCartStore } from '../stores/cartStore'
+import { useAuthStore } from '../stores/authStore'
+import AuthModal from './AuthModal.vue'
 
 const productStore = useProductStore()
 const cartStore = useCartStore()
+const authStore = useAuthStore()
+const showAuthModal = ref(false)
 </script>
