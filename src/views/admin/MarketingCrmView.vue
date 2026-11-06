@@ -1,110 +1,220 @@
 <template>
-  <div class="space-y-8">
-    <!-- 1. 行銷折扣引擎 (AD-07) -->
-    <section class="space-y-4">
-      <div class="flex items-center justify-between">
-        <div>
-          <h2 class="text-xl font-bold text-slate-900">行銷促銷模組 (Promotions)</h2>
-          <p class="text-xs text-slate-500">設定全館優惠券代碼、低消門檻與啟用排程 (AD-07)</p>
+  <div class="d-flex flex-column gap-4">
+    <!-- 標題工具列 -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <h1 class="h4 fw-bold text-dark font-serif mb-1">AD-07 & AD-09 行銷促銷與會員 CRM</h1>
+        <p class="small text-muted mb-0">優惠券生成與排程設定、會員 LTV 價值統計與超商棄單黑名單管制</p>
+      </div>
+
+      <!-- 新增優惠券觸發按鈕 -->
+      <button class="btn btn-primary btn-sm rounded-pill px-3 shadow-2xs fw-bold" @click="showCouponModal = true">
+        + 建立新優惠券
+      </button>
+    </div>
+
+    <!-- 模組 1：行銷優惠券清單 (AD-07) -->
+    <div class="card-korean p-4 bg-white shadow-xs">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="fs-6 fw-bold text-dark mb-0">全站優惠券與促銷代碼 (共 {{ cartStore.availableCoupons.length }} 組)</h2>
+        <span class="badge bg-success-subtle text-success font-monospace" style="font-size: 10px;">前台即時同步</span>
+      </div>
+
+      <div class="row g-3">
+        <div v-for="c in cartStore.availableCoupons" :key="c.code" class="col-12 col-md-6 col-lg-4">
+          <div class="card-korean p-3 border bg-light h-100 d-flex flex-column justify-content-between">
+            <div>
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="badge bg-dark font-monospace">{{ c.code }}</span>
+                <span class="badge" :class="isCouponActive(c) ? 'bg-success rounded-pill' : 'bg-secondary rounded-pill'">
+                  {{ isCouponActive(c) ? '生效中' : '已過期' }}
+                </span>
+              </div>
+              <strong class="text-dark d-block mt-1">{{ c.title }}</strong>
+              <p class="text-muted small mb-2">{{ c.description }}</p>
+            </div>
+            <div class="border-top pt-2 text-muted font-monospace" style="font-size: 10px;">
+              <div>門檻：滿 NT$ {{ c.minSpend }} · 折抵：{{ c.type === 'PERCENT' ? `${c.discountValue}% (打折)` : `NT$ ${c.discountValue}` }}</div>
+              <div>品類：{{ c.targetCategory === 'ALL' ? '全館商品' : c.targetCategory }}</div>
+              <div>排程：{{ c.startDate.slice(0, 10) }} ~ {{ c.endDate.slice(0, 10) }}</div>
+            </div>
+          </div>
         </div>
       </div>
+    </div>
 
-      <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        <table class="w-full text-left text-xs text-slate-600">
-          <thead class="bg-slate-50 text-slate-700 border-b border-slate-200">
-            <tr>
-              <th class="p-4">折扣代碼</th>
-              <th class="p-4">折抵金額</th>
-              <th class="p-4">最低消費門檻</th>
-              <th class="p-4">到期時間</th>
-              <th class="p-4">啟用狀態</th>
-              <th class="p-4 text-right">切換開關</th>
+    <!-- 模組 2：會員名冊與黑名單 (AD-09) -->
+    <div class="card-korean p-4 bg-white shadow-xs">
+      <h2 class="fs-6 fw-bold text-dark mb-3">會員名冊與顧客黑名單控管</h2>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle small mb-0">
+          <thead class="table-light">
+            <tr class="text-secondary" style="font-size: 11px;">
+              <th>會員名稱 / 編號</th>
+              <th>聯絡手機 / 信箱 (RBAC)</th>
+              <th>會員等級 / 累積消費 (LTV)</th>
+              <th>客群標籤 (Tags)</th>
+              <th>超取管制狀態</th>
+              <th class="text-end">管理操作</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-100">
-            <tr v-for="coupon in adminStore.coupons" :key="coupon.code">
-              <td class="p-4 font-mono font-bold text-indigo-600">{{ coupon.code }}</td>
-              <td class="p-4 font-bold text-slate-900">NT$ {{ coupon.discount }}</td>
-              <td class="p-4">滿 NT$ {{ coupon.minSpend.toLocaleString() }}</td>
-              <td class="p-4 font-mono">{{ coupon.expireAt }}</td>
-              <td class="p-4">
-                <span
-                  class="px-2 py-0.5 rounded-full text-[10px] font-bold"
-                  :class="coupon.active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'"
-                >
-                  {{ coupon.active ? '生效中' : '已停用' }}
-                </span>
-              </td>
-              <td class="p-4 text-right">
-                <button
-                  @click="coupon.active = !coupon.active"
-                  class="text-xs font-semibold px-3 py-1 rounded-lg border transition"
-                  :class="coupon.active ? 'border-rose-200 text-rose-600 hover:bg-rose-50' : 'border-indigo-200 text-indigo-600 hover:bg-indigo-50'"
-                >
-                  {{ coupon.active ? '停用' : '啟用' }}
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- 2. 會員 CRM 資料庫 (AD-09) -->
-    <section class="space-y-4">
-      <div>
-        <h2 class="text-xl font-bold text-slate-900">會員關係管理 (CRM)</h2>
-        <p class="text-xs text-slate-500">會員累計消費總額 (LTV)、客製標籤與超商取貨風控黑名單 (AD-09)</p>
-      </div>
-
-      <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        <table class="w-full text-left text-xs text-slate-600">
-          <thead class="bg-slate-50 text-slate-700 border-b border-slate-200">
-            <tr>
-              <th class="p-4">會員編號 / 姓名</th>
-              <th class="p-4">聯絡個資 (遮蔽)</th>
-              <th class="p-4">累積消費額 (LTV)</th>
-              <th class="p-4">總訂單數</th>
-              <th class="p-4">會員標籤</th>
-              <th class="p-4 text-right">風控設定</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100">
+          <tbody>
             <tr v-for="cust in adminStore.customers" :key="cust.id">
-              <td class="p-4">
-                <span class="font-bold text-slate-900 block">{{ cust.name }}</span>
-                <span class="font-mono text-slate-400 text-[10px]">{{ cust.id }}</span>
+              <td>
+                <strong class="text-dark">{{ adminStore.maskName(cust.name) }}</strong>
+                <span class="text-muted font-monospace d-block" style="font-size: 10px;">{{ cust.id }}</span>
               </td>
-              <td class="p-4 font-mono text-slate-500">
-                <div>{{ cust.phone }}</div>
-                <div>{{ cust.email }}</div>
+              <td class="font-monospace">
+                <div>{{ adminStore.maskPhone(cust.phone) }}</div>
+                <div class="text-muted" style="font-size: 11px;">{{ cust.email }}</div>
               </td>
-              <td class="p-4 font-bold text-slate-900">NT$ {{ cust.totalSpent.toLocaleString() }}</td>
-              <td class="p-4">{{ cust.orderCount }} 筆</td>
-              <td class="p-4">
-                <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-indigo-50 text-indigo-700">
-                  {{ cust.tag }}
+              <td>
+                <span class="badge bg-primary-subtle text-primary">{{ cust.tier }}</span>
+                <div class="font-monospace fw-bold mt-1 text-dark">LTV: NT$ {{ cust.ltv.toLocaleString() }}</div>
+              </td>
+              <td>
+                <div class="d-flex gap-1 flex-wrap">
+                  <span v-for="t in cust.tags" :key="t" class="badge bg-light text-dark border">
+                    {{ t }}
+                  </span>
+                </div>
+              </td>
+              <td>
+                <span v-if="cust.isBlacklisted" class="badge bg-danger rounded-pill">
+                  ⚠ 禁止使用超商貨到付款
+                </span>
+                <span v-else class="badge bg-success-subtle text-success rounded-pill">
+                  信用良好
                 </span>
               </td>
-              <td class="p-4 text-right">
+              <td class="text-end">
                 <button
-                  @click="cust.isBlacklisted = !cust.isBlacklisted"
-                  class="px-2.5 py-1 rounded-lg text-xs font-semibold transition"
-                  :class="cust.isBlacklisted ? 'bg-rose-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                  class="btn btn-sm rounded-pill px-3 py-1 font-monospace"
+                  :class="cust.isBlacklisted ? 'btn-outline-success' : 'btn-outline-danger'"
+                  style="font-size: 11px;"
+                  @click="adminStore.toggleCustomerBlacklist(cust.id)"
                 >
-                  {{ cust.isBlacklisted ? '已列入黑名單 (禁超商)' : '設為黑名單' }}
+                  {{ cust.isBlacklisted ? '解除黑名單' : '列入黑名單' }}
                 </button>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
-    </section>
+    </div>
+
+    <!-- ==================== 新增優惠券彈窗 Modal (AD-07) ==================== -->
+    <Teleport to="body">
+      <div v-if="showCouponModal" class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.55); backdrop-filter: blur(2px); z-index: 1070;">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 480px;">
+          <div class="modal-content rounded-4 border-0 p-4 shadow-xl">
+            <div class="modal-header border-0 pb-0">
+              <h3 class="modal-title fs-6 fw-bold text-dark font-serif">建立新優惠券促銷代碼</h3>
+              <button type="button" class="btn-close" @click="showCouponModal = false"></button>
+            </div>
+            <div class="modal-body small">
+              <form @submit.prevent="submitCreateCoupon" class="d-flex flex-column gap-3">
+                <div class="row g-2">
+                  <div class="col-6">
+                    <label class="form-label text-secondary mb-1">折扣代碼 (英數大寫) *</label>
+                    <input v-model="newCouponForm.code" required type="text" class="form-control form-control-sm font-monospace text-uppercase" placeholder="SPRING2026" />
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label text-secondary mb-1">折扣類型 *</label>
+                    <select v-model="newCouponForm.type" class="form-select form-select-sm">
+                      <option value="FIXED">固定金額扣減 (NT$)</option>
+                      <option value="PERCENT">百分比折抵 (%)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="form-label text-secondary mb-1">優惠活動名稱 *</label>
+                  <input v-model="newCouponForm.title" required type="text" class="form-control form-control-sm" placeholder="例如：春季新品專屬折 150" />
+                </div>
+
+                <div class="row g-2">
+                  <div class="col-6">
+                    <label class="form-label text-secondary mb-1">折扣數值 *</label>
+                    <input v-model.number="newCouponForm.discountValue" required type="number" min="1" class="form-control form-control-sm font-monospace" placeholder="150" />
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label text-secondary mb-1">最低消費門檻 (NT$) *</label>
+                    <input v-model.number="newCouponForm.minSpend" required type="number" min="0" class="form-control form-control-sm font-monospace" placeholder="1000" />
+                  </div>
+                </div>
+
+                <div>
+                  <label class="form-label text-secondary mb-1">適用商品品類</label>
+                  <select v-model="newCouponForm.targetCategory" class="form-select form-select-sm">
+                    <option value="ALL">全館所有品類通用</option>
+                    <option value="Top 上衣">Top 上衣</option>
+                    <option value="Outer 外套">Outer 外套</option>
+                    <option value="Bottom 下身">Bottom 下身</option>
+                    <option value="Dress 裙裝">Dress 裙裝</option>
+                  </select>
+                </div>
+
+                <div class="row g-2">
+                  <div class="col-6">
+                    <label class="form-label text-secondary mb-1">排程開始日期 *</label>
+                    <input v-model="newCouponForm.startDate" required type="date" class="form-control form-control-sm font-monospace" />
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label text-secondary mb-1">排程結束日期 *</label>
+                    <input v-model="newCouponForm.endDate" required type="date" class="form-control form-control-sm font-monospace" />
+                  </div>
+                </div>
+
+                <div class="pt-2">
+                  <button type="submit" class="btn btn-primary w-100 rounded-pill py-2.5 fw-bold">
+                    確認新增並立即在前台啟用
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
+import { ref, reactive } from 'vue'
 import { useAdminStore } from '../../stores/adminStore'
+import { useCartStore } from '../../stores/cartStore'
 
 const adminStore = useAdminStore()
+const cartStore = useCartStore()
+
+const showCouponModal = ref(false)
+
+const newCouponForm = reactive({
+  code: '',
+  title: '',
+  description: '',
+  type: 'FIXED',
+  discountValue: 100,
+  minSpend: 1000,
+  targetCategory: 'ALL',
+  startDate: new Date().toISOString().slice(0, 10),
+  endDate: '2026-12-31'
+})
+
+const isCouponActive = (c) => {
+  const now = new Date()
+  return now >= new Date(c.startDate) && now <= new Date(c.endDate)
+}
+
+const submitCreateCoupon = () => {
+  newCouponForm.description = `${newCouponForm.targetCategory === 'ALL' ? '全館' : newCouponForm.targetCategory}單筆滿 NT$ ${newCouponForm.minSpend} 現折 ${newCouponForm.type === 'PERCENT' ? newCouponForm.discountValue + '%' : 'NT$ ' + newCouponForm.discountValue}`
+  const res = adminStore.addNewCoupon(newCouponForm)
+  alert(res.message)
+  if (res.success) {
+    showCouponModal.value = false
+    newCouponForm.code = ''
+    newCouponForm.title = ''
+  }
+}
 </script>

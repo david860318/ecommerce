@@ -1,9 +1,89 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+:root {
+  --bs-primary: #9b7e68;          /* 韓系燕麥摩卡主色 */
+  --bs-primary-rgb: 155, 126, 104;
+  --bs-body-bg: #faf9f6;          /* 暖米白底色 */
+  --bs-body-color: #332d29;       /* 炭灰文字 */
+  --bs-border-color: #ede8e1;     /* 極細淺米灰邊框 */
+}
+
+/* 全域盒模型防爆 */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
 
 body {
-  background-color: #FAF9F6; /* 韓系網拍必備的暖調底色 */
-  color: #332D29;
-  letter-spacing: 0.02em; /* 微寬字距，增加鬆弛感 */
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  letter-spacing: 0.02em;
+  overflow-x: hidden;
+}
+
+/* 主色按鈕覆蓋 */
+.btn-primary {
+  background-color: #9b7e68 !important;
+  border-color: #9b7e68 !important;
+  color: #ffffff !important;
+}
+.btn-primary:hover, .btn-primary:active, .btn-primary:focus {
+  background-color: #7f6450 !important;
+  border-color: #7f6450 !important;
+  color: #ffffff !important;
+}
+
+.btn-outline-primary {
+  color: #9b7e68 !important;
+  border-color: #9b7e68 !important;
+}
+.btn-outline-primary:hover {
+  background-color: #9b7e68 !important;
+  border-color: #9b7e68 !important;
+  color: #ffffff !important;
+}
+
+/* 韓系精緻卡片容器 */
+.card-korean {
+  background-color: #ffffff;
+  border: 1px solid #ede8e1;
+  border-radius: 0.85rem;
+  transition: box-shadow 0.2s ease;
+}
+
+/* 隱藏滾動條但保持滾動 */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* 後台選單高亮樣式 */
+.admin-sidebar-btn {
+  color: #5c544d;
+  transition: all 0.15s ease;
+  font-weight: 500;
+}
+.admin-sidebar-btn:hover {
+  background-color: #f5f0eb;
+  color: #332d29;
+}
+.admin-sidebar-btn.active-menu {
+  background-color: #9b7e68 !important;
+  color: #ffffff !important;
+  font-weight: 600;
+}
+.admin-sidebar-btn.active-menu svg {
+  color: #ffffff !important;
+}
+
+/* 表格專用：欄位單行文字防換行、自動對齊 */
+.text-nowrap-cell {
+  white-space: nowrap !important;
+}
+
+/* 彈窗遮罩微毛玻璃 */
+.modal-backdrop-blur {
+  background-color: rgba(30, 25, 22, 0.55);
+  backdrop-filter: blur(3px);
 }

@@ -1,478 +1,399 @@
 <template>
-  <div class="max-w-5xl mx-auto px-4 py-10">
-    <!-- 會員卡片與登出按鈕 (韓系極簡名片感) -->
-    <div class="bg-white rounded-2xl border border-stone-200/80 p-6 sm:p-8 shadow-xs mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
-      <div class="flex items-center gap-4">
-        <div class="w-14 h-14 rounded-full bg-brand-100 text-brand-700 font-serif font-bold text-xl flex items-center justify-center border border-brand-200/60 flex-shrink-0">
-          {{ authStore.user?.name ? authStore.user.name[0] : 'M' }}
-        </div>
-        <div class="min-w-0">
-          <div class="flex items-center gap-2 flex-wrap">
-            <h1 class="text-lg font-bold text-stone-800 tracking-wide">{{ authStore.user?.name || '陳大文' }}</h1>
-            <span class="text-[11px] bg-brand-50 text-brand-600 px-2.5 py-0.5 rounded-full font-medium border border-brand-200/60">
-              {{ authStore.user?.tier || 'VIP MEMBER' }}
-            </span>
+  <div class="container py-5" style="max-width: 1040px;">
+    <!-- 會員名片 -->
+    <div class="card-korean p-4 p-md-5 mb-4 shadow-sm bg-white">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+        <div class="d-flex align-items-center gap-3">
+          <div
+            class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold fs-4 flex-shrink-0"
+            style="width: 60px; height: 60px; background-color: #9b7e68;"
+          >
+            {{ authStore.user?.name ? authStore.user.name[0] : 'M' }}
           </div>
-          <p class="text-xs text-stone-400 mt-1 font-mono tracking-normal">
-            {{ authStore.user?.phone || '0912-345-678' }} · {{ authStore.user?.email || 'user@md-korea.com' }}
-          </p>
+          <div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <h1 class="h5 fw-bold mb-0 text-dark">{{ authStore.user?.name || '陳大文' }}</h1>
+              <span class="badge rounded-pill" style="background-color: #f5f0eb; color: #7f6450; border: 1px solid #e8ded4;">
+                {{ authStore.user?.tier || 'VIP MEMBER' }}
+              </span>
+            </div>
+            <div class="small text-muted mt-1 font-monospace">
+              {{ authStore.user?.phone || '0912-345-678' }} · {{ authStore.user?.email || 'user@md-korea.com' }}
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex align-items-center justify-content-between w-100 w-md-auto gap-3">
+          <div class="bg-light px-3 py-2 rounded-3 text-center border cursor-pointer" @click="activeMainTab = 'points'">
+            <div class="text-muted" style="font-size: 10px; letter-spacing: 0.05em;">AVAILABLE POINTS</div>
+            <div class="fw-bold fs-5" style="color: #9b7e68;">
+              {{ authStore.user?.points || 0 }} <small class="fs-6 text-muted fw-normal">點</small>
+            </div>
+          </div>
+
+          <button @click="handleLogout" class="btn btn-outline-danger btn-sm rounded-pill px-3 py-2 d-flex align-items-center gap-1">
+            <LogOut style="width: 14px; height: 14px;" />
+            登出
+          </button>
         </div>
       </div>
+    </div>
 
-      <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-        <div class="bg-stone-50 px-4 py-2 rounded-xl border border-stone-200/60 text-center">
-          <div class="text-[10px] text-stone-400 tracking-wider">REWARD POINTS</div>
-          <div class="text-base font-serif font-bold text-brand-700">{{ authStore.user?.points || 150 }} <span class="text-xs font-sans font-normal text-stone-400">點</span></div>
-        </div>
-
+    <!-- 頁籤導航 -->
+    <ul class="nav nav-underline border-bottom mb-4">
+      <li class="nav-item">
         <button
-          @click="handleLogout"
-          class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-stone-200 text-stone-500 hover:text-stone-800 hover:bg-stone-50 text-xs font-medium transition active:scale-95"
+          class="nav-link text-uppercase fw-semibold py-2 px-3"
+          :class="{ 'active text-primary border-primary': activeMainTab === 'orders', 'text-secondary': activeMainTab !== 'orders' }"
+          @click="activeMainTab = 'orders'"
         >
-          <LogOut class="w-3.5 h-3.5" />
-          登出
+          <Package class="me-1" style="width: 15px; height: 15px;" />
+          訂單紀錄 ({{ displayOrders.length }})
         </button>
-      </div>
-    </div>
+      </li>
+      <li class="nav-item">
+        <button
+          class="nav-link text-uppercase fw-semibold py-2 px-3"
+          :class="{ 'active text-primary border-primary': activeMainTab === 'points', 'text-secondary': activeMainTab !== 'points' }"
+          @click="activeMainTab = 'points'"
+        >
+          <Coins class="me-1" style="width: 15px; height: 15px;" />
+          紅利點數專區
+        </button>
+      </li>
+      <li class="nav-item">
+        <button
+          class="nav-link text-uppercase fw-semibold py-2 px-3"
+          :class="{ 'active text-primary border-primary': activeMainTab === 'wishlist', 'text-secondary': activeMainTab !== 'wishlist' }"
+          @click="activeMainTab = 'wishlist'"
+        >
+          <Heart class="me-1" style="width: 15px; height: 15px;" />
+          願望清單 ({{ (authStore.user?.wishlist || []).length }})
+        </button>
+      </li>
+      <li class="nav-item">
+        <button
+          class="nav-link text-uppercase fw-semibold py-2 px-3"
+          :class="{ 'active text-primary border-primary': activeMainTab === 'restock', 'text-secondary': activeMainTab !== 'restock' }"
+          @click="activeMainTab = 'restock'"
+        >
+          <Bell class="me-1" style="width: 15px; height: 15px;" />
+          補貨提醒 ({{ (authStore.user?.restockRequests || []).length }})
+        </button>
+      </li>
+      <li class="nav-item">
+        <button
+          class="nav-link text-uppercase fw-semibold py-2 px-3"
+          :class="{ 'active text-primary border-primary': activeMainTab === 'profile', 'text-secondary': activeMainTab !== 'profile' }"
+          @click="activeMainTab = 'profile'"
+        >
+          <User class="me-1" style="width: 15px; height: 15px;" />
+          個人資料
+        </button>
+      </li>
+    </ul>
 
-    <!-- 主頁籤導航 (韓系極簡下劃線風格) -->
-    <div class="flex border-b border-stone-200 gap-8 mb-6 text-xs tracking-wider uppercase font-medium">
-      <button
-        @click="activeMainTab = 'orders'"
-        class="pb-3 transition relative flex items-center gap-1.5"
-        :class="activeMainTab === 'orders' ? 'text-brand-700 border-b border-brand-700 font-bold' : 'text-stone-400 hover:text-stone-600'"
-      >
-        <Package class="w-3.5 h-3.5" />
-        訂單紀錄 ({{ userOrders.length }})
-      </button>
-      <button
-        @click="activeMainTab = 'addresses'"
-        class="pb-3 transition relative flex items-center gap-1.5"
-        :class="activeMainTab === 'addresses' ? 'text-brand-700 border-b border-brand-700 font-bold' : 'text-stone-400 hover:text-stone-600'"
-      >
-        <MapPin class="w-3.5 h-3.5" />
-        常用地址 ({{ (authStore.user?.addresses || []).length }}/5)
-      </button>
-      <button
-        @click="activeMainTab = 'profile'"
-        class="pb-3 transition relative flex items-center gap-1.5"
-        :class="activeMainTab === 'profile' ? 'text-brand-700 border-b border-brand-700 font-bold' : 'text-stone-400 hover:text-stone-600'"
-      >
-        <User class="w-3.5 h-3.5" />
-        個人資料
-      </button>
-    </div>
-
-    <!-- 模組 1：訂單歷程與韓系優雅步驟條 -->
-    <div v-if="activeMainTab === 'orders'" class="space-y-6">
-
-      <!-- ★ 韓系大地色感步驟條 ★ -->
-      <div class="bg-white rounded-2xl border border-stone-200/70 p-5 sm:p-7 shadow-xs">
-        <div class="flex items-center justify-between mb-6">
-          <div class="flex items-center gap-2">
-            <span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
-            <h3 class="font-bold text-xs tracking-wider text-stone-700 uppercase">ORDER PROGRESS</h3>
+    <!-- ==================== 模組 1：訂單紀錄與步驟條 ==================== -->
+    <div v-if="activeMainTab === 'orders'" class="d-flex flex-column gap-4">
+      
+      <!-- ★ 核心步驟條（強制渲染，支援點擊過濾） ★ -->
+      <div class="card-korean p-4 shadow-sm bg-white">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div class="d-flex align-items-center gap-2">
+            <span class="rounded-circle" style="width: 8px; height: 8px; background-color: #9b7e68;"></span>
+            <span class="fw-bold small text-uppercase" style="letter-spacing: 0.05em;">ORDER TIMELINE</span>
           </div>
-          <span class="text-[11px] text-stone-400">點選步驟查看進度</span>
+          <span class="small text-muted">點選步驟節點過濾訂單</span>
         </div>
 
-        <div class="overflow-x-auto pb-2 scrollbar-none">
-          <div class="min-w-[640px] relative px-4 flex items-center justify-between">
-            <!-- 灰色底線 -->
-            <div class="absolute left-8 right-8 top-5 h-0.5 bg-stone-100 -z-0"></div>
+        <div class="overflow-x-auto no-scrollbar py-2">
+          <div class="position-relative d-flex justify-content-between align-items-center px-3" style="min-width: 660px;">
+            <!-- 背景灰色底線 -->
+            <div class="position-absolute bg-light rounded-pill" style="left: 40px; right: 40px; top: 22px; height: 3px; z-index: 0;"></div>
 
-            <!-- 動態大地色填充線 -->
+            <!-- 動態進度連線 -->
             <div
-              class="absolute left-8 top-5 h-0.5 rounded-full transition-all duration-300 ease-out -z-0"
-              :class="stepperLineClass"
-              :style="{ width: stepperProgressWidth }"
+              class="position-absolute rounded-pill"
+              :style="{
+                left: '40px',
+                top: '22px',
+                height: '3px',
+                backgroundColor: currentStatus === 'CANCELLED' ? '#adb5bd' : '#9b7e68',
+                width: stepperProgressWidth,
+                transition: 'all 0.3s ease',
+                zIndex: 0
+              }"
             ></div>
 
             <!-- 步驟節點 -->
             <button
               v-for="step in interactiveSteps"
               :key="step.key"
-              @click="currentStatus = step.key"
               type="button"
-              class="flex flex-col items-center group relative z-10 focus:outline-none cursor-pointer transition-transform duration-150 active:scale-95"
-              style="width: 76px;"
+              class="step-node-btn position-relative"
+              style="z-index: 1;"
+              @click="currentStatus = step.key"
             >
-              <div class="relative">
-                <div
-                  class="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200"
-                  :class="[
-                    currentStatus === step.key
-                      ? getNodeActiveClass(step.key)
-                      : 'bg-white border border-stone-200 text-stone-400 group-hover:border-brand-400 group-hover:text-brand-600'
-                  ]"
-                >
-                  <component :is="step.icon" class="w-4 h-4 stroke-[1.8]" />
+              <div class="position-relative d-inline-block">
+                <div class="step-circle" :class="{ 'active': currentStatus === step.key }">
+                  <component :is="step.icon" style="width: 18px; height: 18px;" />
                 </div>
-
                 <span
                   v-if="getOrderCount(step.key) > 0"
-                  class="absolute -top-1 -right-1 text-[9px] font-mono font-bold px-1.5 rounded-full border border-white"
-                  :class="currentStatus === step.key ? 'bg-stone-800 text-white' : 'bg-brand-500 text-white'"
+                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark"
+                  style="font-size: 9px;"
                 >
                   {{ getOrderCount(step.key) }}
                 </span>
               </div>
-
-              <span
-                class="text-[11px] mt-2 font-medium tracking-tight whitespace-nowrap"
-                :class="currentStatus === step.key ? 'text-brand-700 font-bold' : 'text-stone-500 group-hover:text-stone-700'"
-              >
+              <div class="small fw-semibold mt-2 text-nowrap" :class="currentStatus === step.key ? 'text-primary' : 'text-secondary'">
                 {{ step.title }}
-              </span>
-
-              <span class="text-[9px] text-stone-400 tracking-wider">
-                {{ step.desc }}
-              </span>
+              </div>
+              <div class="text-muted" style="font-size: 10px;">{{ step.desc }}</div>
             </button>
           </div>
         </div>
       </div>
 
-      <!-- 當前過濾標籤說明 -->
-      <div class="flex items-center justify-between px-1 text-xs text-stone-500">
+      <!-- 篩選狀態提示列 -->
+      <div class="d-flex justify-content-between align-items-center small text-secondary px-1">
         <div>
-          篩選檢視：<span class="font-bold text-stone-800">{{ getFilterTitle(currentStatus) }}</span>
-          <span class="text-stone-400"> ({{ filteredOrders.length }})</span>
+          目前檢視：<strong class="text-dark">{{ getFilterTitle(currentStatus) }}</strong> (共 {{ filteredOrders.length }} 筆訂單)
         </div>
-        <button
-          v-if="currentStatus !== 'ALL'"
-          @click="currentStatus = 'ALL'"
-          class="text-brand-600 hover:underline"
-        >
-          查看所有訂單
+        <button v-if="currentStatus !== 'ALL'" @click="currentStatus = 'ALL'" class="btn btn-link btn-sm p-0 text-primary text-decoration-none">
+          查看全部訂單 →
         </button>
       </div>
 
-      <!-- 訂單卡片清單 (韓系極簡線條) -->
-      <div
-        v-for="order in filteredOrders"
-        :key="order.id"
-        class="bg-white rounded-2xl border border-stone-200/70 p-5 sm:p-6 shadow-xs text-xs space-y-4"
-      >
-        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-stone-100 pb-3">
-          <div class="flex items-center gap-3">
-            <span class="font-mono font-bold text-stone-800">{{ order.id }}</span>
-            <span class="text-stone-400 text-[11px]">{{ order.createdAt }}</span>
-          </div>
+      <!-- 查無訂單提示 -->
+      <div v-if="filteredOrders.length === 0" class="card-korean text-center py-5 text-muted bg-white">
+        <Package class="mb-2 opacity-50" style="width: 44px; height: 44px;" />
+        <div class="small">在此狀態下目前尚無訂單紀錄</div>
+      </div>
 
-          <span
-            class="px-2.5 py-0.5 rounded-full text-[11px] font-medium tracking-wide self-start sm:self-auto"
-            :class="getBadgeClass(order.status)"
-          >
-            {{ getStatusText(order.status) }}
+      <!-- 訂單卡片清單 -->
+      <div v-for="order in filteredOrders" :key="order.id" class="card-korean p-4 shadow-sm bg-white">
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+          <div class="d-flex align-items-center gap-3">
+            <span class="fw-bold font-monospace text-dark">{{ order.id }}</span>
+            <span class="text-muted small">{{ order.createdAt }}</span>
+          </div>
+          <span class="badge py-1 px-2" :class="getBadgeClass(order.shippingStatus || order.status)">
+            {{ getStatusText(order.shippingStatus || order.status) }}
           </span>
         </div>
 
-        <!-- 商品明細 (韓系 3:4 縮圖與文字排版) -->
-        <div class="divide-y divide-stone-100">
+        <div class="d-flex flex-column gap-3 mb-3">
           <div
             v-for="(item, idx) in order.items"
             :key="idx"
-            class="py-3 first:pt-0 last:pb-0 flex items-center justify-between gap-4"
+            class="d-flex justify-content-between align-items-center small"
           >
-            <div class="flex items-center gap-3 min-w-0">
-              <div class="w-12 h-16 rounded-md bg-stone-100 overflow-hidden flex-shrink-0 border border-stone-200/50">
-                <img :src="item.image || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=200&q=80'" class="w-full h-full object-cover" />
-              </div>
-              <div class="min-w-0">
-                <p class="font-medium text-stone-800 text-xs truncate">{{ item.name }}</p>
-                <p class="text-stone-400 text-[11px] mt-0.5">數量：{{ item.quantity }}</p>
-              </div>
+            <div>
+              <span class="fw-semibold text-dark">{{ item.name }}</span>
+              <span class="text-muted ms-1">× {{ item.quantity }}</span>
             </div>
-            <span class="font-serif font-bold text-stone-800 flex-shrink-0">
-              NT$ {{ (item.price * item.quantity).toLocaleString() }}
-            </span>
+            <div class="d-flex align-items-center gap-3">
+              <span class="font-monospace fw-bold">NT$ {{ (item.price * item.quantity).toLocaleString() }}</span>
+              <template v-if="(order.shippingStatus || order.status) === 'DELIVERED'">
+                <button
+                  v-if="!isItemReviewed(order.id, item.name)"
+                  type="button"
+                  class="btn btn-outline-primary btn-sm rounded-pill px-3 py-1 font-monospace"
+                  style="font-size: 11px;"
+                  @click="openReviewModal(order, item)"
+                >
+                  ★ 評價商品與曬圖
+                </button>
+                <span v-else class="badge bg-light text-muted border font-monospace" style="font-size: 11px;">
+                  ✓ 已完成評價
+                </span>
+              </template>
+            </div>
           </div>
         </div>
 
-        <!-- 底部查件與操作 -->
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pt-3 border-t border-stone-100 gap-3">
-          <div class="text-stone-500 text-[11px] flex flex-wrap items-center gap-2">
-            <span>{{ order.shippingMethod }}</span>
-            <span v-if="order.trackingCode" class="inline-flex items-center gap-1 text-stone-600 bg-stone-50 px-2 py-0.5 rounded border border-stone-200/60 font-mono">
-              {{ order.trackingCode }}
-              <a
-                :href="getTrackingUrl(order.shippingMethod, order.trackingCode)"
-                target="_blank"
-                class="text-brand-600 hover:text-brand-800 ml-1 inline-flex items-center gap-0.5 underline"
-              >
-                查件
-                <ExternalLink class="w-3 h-3" />
-              </a>
-            </span>
-          </div>
-
-          <div class="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-4">
-            <div class="text-right">
-              <span class="text-[10px] text-stone-400 block tracking-wider uppercase">Total</span>
-              <span class="font-serif font-bold text-stone-900 text-sm">NT$ {{ order.amount.toLocaleString() }}</span>
+        <div class="d-flex justify-content-between align-items-center pt-3 border-top small">
+          <div class="text-muted">{{ order.shippingMethod }}</div>
+          <div class="d-flex align-items-center gap-3">
+            <div class="text-end">
+              <span class="text-muted d-block" style="font-size: 10px;">實付總額</span>
+              <span class="fw-bold fs-6 font-monospace text-dark">NT$ {{ order.amount.toLocaleString() }}</span>
             </div>
-
             <button
-              v-if="order.status === 'PENDING_PAYMENT' || order.status === 'PROCESSING'"
-              @click="cancelOrder(order)"
-              class="px-3 py-1.5 border border-stone-300 text-stone-600 hover:bg-stone-50 rounded-lg text-xs font-medium transition"
+              v-if="(order.shippingStatus || order.status) === 'SHIPPED'"
+              class="btn btn-outline-success btn-sm rounded-pill px-3"
+              @click="adminStore.markAsDelivered(order.id)"
             >
-              取消訂單
-            </button>
-
-            <button
-              v-if="order.status === 'COMPLETED'"
-              @click="requestRefund(order)"
-              class="px-3 py-1.5 border border-stone-300 text-stone-600 hover:bg-stone-50 rounded-lg text-xs font-medium transition"
-            >
-              申請售後
+              模擬確認送達 (自動發放點數)
             </button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 模組 2：地址簿維護 -->
-    <div v-if="activeMainTab === 'addresses'" class="space-y-4">
-      <div class="flex justify-between items-center bg-white p-4 rounded-xl border border-stone-200/70 shadow-xs">
-        <span class="text-xs text-stone-500">最多儲存 5 組常用地址，結帳時自動代入</span>
-        <button
-          @click="openAddAddressModal"
-          :disabled="(authStore.user?.addresses || []).length >= 5"
-          class="text-xs bg-brand-600 hover:bg-brand-700 text-white px-3.5 py-2 rounded-lg font-medium transition disabled:opacity-40"
-        >
-          + 新增地址
-        </button>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div
-          v-for="addr in (authStore.user?.addresses || [])"
-          :key="addr.id"
-          class="bg-white rounded-xl border p-5 shadow-xs relative flex flex-col justify-between"
-          :class="addr.isDefault ? 'border-brand-500 bg-brand-50/20' : 'border-stone-200/70'"
-        >
+    <!-- 模組 2：紅利點數專區 -->
+    <div v-if="activeMainTab === 'points'" class="d-flex flex-column gap-4">
+      <div class="card-korean p-4 shadow-sm bg-white" style="background: linear-gradient(135deg, #faf8f5 0%, #ede8e1 100%);">
+        <div class="d-flex justify-content-between align-items-center">
           <div>
-            <div class="flex items-center justify-between mb-1">
-              <span class="font-bold text-sm text-stone-800">{{ addr.recipient }}</span>
-              <span v-if="addr.isDefault" class="text-[10px] bg-brand-50 text-brand-700 px-2 py-0.5 rounded font-medium border border-brand-200">
-                預設地址
-              </span>
-            </div>
-            <div class="font-mono text-xs text-stone-400 mb-2">{{ addr.phone }}</div>
-            <p class="text-xs text-stone-600 leading-relaxed">{{ addr.address }}</p>
+            <span class="badge bg-dark rounded-pill px-2.5 py-1 mb-2 font-monospace" style="font-size: 10px;">MD REWARD CLUB</span>
+            <h2 class="h5 fw-bold text-dark mb-1">我的紅利點數餘額</h2>
+            <div class="text-muted small">1 點紅利 = NT$ 1 元，結帳最高折抵訂單 20%</div>
           </div>
-
-          <div class="flex items-center justify-between pt-3 mt-3 border-t border-stone-100 text-xs font-medium">
-            <div class="flex items-center gap-3">
-              <button v-if="!addr.isDefault" @click="authStore.setDefaultAddress(addr.id)" class="text-brand-600 hover:underline">設為預設</button>
-              <button @click="openEditAddressModal(addr)" class="text-stone-500 hover:text-stone-800">編輯</button>
+          <div class="text-end">
+            <div class="display-6 fw-bold font-monospace" style="color: #9b7e68;">
+              {{ authStore.user?.points || 0 }} <span class="fs-6 text-dark font-sans">點</span>
             </div>
-            <button @click="handleRemoveAddress(addr.id)" class="text-stone-400 hover:text-rose-600">刪除</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-korean p-4 shadow-sm bg-white">
+        <h3 class="fs-6 fw-bold text-dark mb-3">點數收支異動紀錄</h3>
+        <div v-if="(authStore.user?.pointsHistory || []).length === 0" class="text-center py-4 text-muted small">
+          尚無點數收支紀錄
+        </div>
+        <div v-else class="table-responsive">
+          <table class="table table-hover align-middle small mb-0">
+            <thead class="table-light">
+              <tr class="text-secondary" style="font-size: 11px;">
+                <th>時間</th>
+                <th>摘要</th>
+                <th>關聯單號</th>
+                <th class="text-end">變動點數</th>
+                <th class="text-end">餘額</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="h in authStore.user.pointsHistory" :key="h.id">
+                <td class="text-muted font-monospace">{{ h.createdAt }}</td>
+                <td>{{ h.title }}</td>
+                <td class="font-monospace text-muted">{{ h.orderId || '—' }}</td>
+                <td class="text-end font-monospace fw-bold" :class="h.amount > 0 ? 'text-success' : 'text-primary'">
+                  {{ h.amount > 0 ? `+${h.amount}` : h.amount }} 點
+                </td>
+                <td class="text-end font-monospace">{{ h.balance }} 點</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 模組 3：願望清單 -->
+    <div v-if="activeMainTab === 'wishlist'" class="d-flex flex-column gap-3">
+      <div v-if="wishlistProducts.length === 0" class="card-korean text-center py-5 text-muted bg-white">
+        <Heart class="mb-2 opacity-40 text-danger" style="width: 44px; height: 44px;" />
+        <h2 class="h6 fw-bold text-dark">願望清單目前是空的</h2>
+      </div>
+      <div v-else class="row g-3">
+        <div v-for="p in wishlistProducts" :key="p.id" class="col-12 col-md-6">
+          <div class="card-korean p-3 d-flex gap-3 align-items-center bg-white shadow-xs">
+            <img :src="p.image" class="rounded object-fit-cover" style="width: 64px; height: 84px;" />
+            <div class="flex-grow-1 min-w-0">
+              <h3 class="fw-bold fs-6 text-dark text-truncate mb-1 cursor-pointer" @click="$router.push(`/product/${p.id}`)">{{ p.name }}</h3>
+              <div class="fw-bold font-monospace mb-2" style="color: #9b7e68;">NT$ {{ p.basePrice.toLocaleString() }}</div>
+              <button class="btn btn-primary btn-sm rounded-pill px-3 py-1 small" @click="$router.push(`/product/${p.id}`)">前往選購</button>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 模組 3：個人基本資料 -->
-    <div v-if="activeMainTab === 'profile'" class="bg-white rounded-2xl border border-stone-200/70 p-6 sm:p-8 shadow-xs max-w-lg">
-      <h3 class="text-sm font-bold text-stone-800 mb-4 tracking-wider uppercase">PROFILE SETTINGS</h3>
-      <form @submit.prevent="handleUpdateProfile" class="space-y-4 text-xs">
-        <div>
-          <label class="block text-stone-600 mb-1">會員姓名 *</label>
-          <input v-model="profileForm.name" required type="text" class="w-full border border-stone-200 p-2.5 rounded-lg text-xs outline-none focus:border-brand-500" />
+    <!-- 模組 4：補貨提醒 -->
+    <div v-if="activeMainTab === 'restock'" class="d-flex flex-column gap-3">
+      <div v-for="req in authStore.user?.restockRequests" :key="req.id" class="card-korean p-3 bg-white">
+        <div class="d-flex justify-content-between mb-1">
+          <strong class="text-dark">{{ req.productName }}</strong>
+          <span class="badge bg-warning-subtle text-warning-emphasis">待補貨中</span>
         </div>
-        <div>
-          <label class="block text-stone-600 mb-1">聯絡信箱 *</label>
-          <input v-model="profileForm.email" required type="email" class="w-full border border-stone-200 p-2.5 rounded-lg text-xs font-mono outline-none focus:border-brand-500" />
-        </div>
-        <div>
-          <label class="block text-stone-400 mb-1">綁定手機 (不可修改)</label>
-          <input :value="authStore.user?.phone || '0912345678'" disabled class="w-full bg-stone-50 border border-stone-200 p-2.5 rounded-lg text-xs font-mono text-stone-400" />
-        </div>
-        <button type="submit" class="bg-brand-600 hover:bg-brand-700 text-white font-medium px-5 py-2.5 rounded-lg text-xs transition">
-          儲存變更
-        </button>
-      </form>
+        <div class="small text-muted mb-2">預約規格：{{ req.skuName }}</div>
+        <button class="btn btn-link btn-sm text-danger p-0 text-decoration-none" @click="authStore.cancelRestockAlert(req.id)">取消提醒</button>
+      </div>
     </div>
 
-    <!-- 地址彈窗 -->
-    <Teleport to="body">
-      <div v-if="showAddressModal" class="fixed inset-0 z-[9999] bg-stone-900/40 backdrop-blur-xs flex items-center justify-center p-4" @click.self="showAddressModal = false">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl relative animate-in fade-in zoom-in-95 duration-150">
-          <button @click="showAddressModal = false" class="absolute top-4 right-4 text-stone-400 hover:text-stone-600 p-1">
-            <X class="w-4 h-4" />
-          </button>
-          <h3 class="text-sm font-bold text-stone-800 mb-4">{{ isEditing ? '編輯收件地址' : '新增常用收件地址' }}</h3>
-          <form @submit.prevent="saveAddress" class="space-y-3.5 text-xs">
-            <div>
-              <label class="block text-stone-600 mb-1">收件人姓名 *</label>
-              <input v-model="addressForm.recipient" required type="text" class="w-full border border-stone-200 p-2 rounded-lg text-xs outline-none focus:border-brand-500" />
-            </div>
-            <div>
-              <label class="block text-stone-600 mb-1">手機號碼 *</label>
-              <input v-model="addressForm.phone" required pattern="^09\d{8}$" type="tel" class="w-full border border-stone-200 p-2 rounded-lg text-xs font-mono outline-none focus:border-brand-500" />
-            </div>
-            <div>
-              <label class="block text-stone-600 mb-1">完整地址 *</label>
-              <input v-model="addressForm.address" required type="text" class="w-full border border-stone-200 p-2 rounded-lg text-xs outline-none focus:border-brand-500" />
-            </div>
-            <div class="flex items-center gap-2 pt-1">
-              <input id="default-check" v-model="addressForm.isDefault" type="checkbox" class="rounded text-brand-600 focus:ring-brand-500 w-3.5 h-3.5" />
-              <label for="default-check" class="text-stone-600">設為預設常用地址</label>
-            </div>
-            <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-medium py-2.5 rounded-lg text-xs transition mt-2">
-              儲存
-            </button>
-          </form>
+    <!-- 模組 5：個人資料 -->
+    <div v-if="activeMainTab === 'profile'" class="card-korean p-4 p-md-5 bg-white" style="max-width: 540px;">
+      <h2 class="h6 fw-bold text-uppercase mb-4">PROFILE SETTINGS</h2>
+      <div class="small d-flex flex-column gap-3">
+        <div>
+          <label class="form-label text-muted mb-1">姓名</label>
+          <input :value="authStore.user?.name" disabled class="form-control form-control-sm bg-light" />
+        </div>
+        <div>
+          <label class="form-label text-muted mb-1">信箱</label>
+          <input :value="authStore.user?.email" disabled class="form-control form-control-sm bg-light font-monospace" />
         </div>
       </div>
-    </Teleport>
+    </div>
+
+    <!-- 評價彈窗 -->
+    <ReviewModal
+      :is-open="showReviewModal"
+      :order-id="activeOrder?.id"
+      :product-id="activeProductId"
+      :item="activeItem"
+      @close="showReviewModal = false"
+      @submitted="showReviewModal = false"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import {
-  LogOut,
-  Package,
-  MapPin,
-  User,
-  ExternalLink,
-  Plus,
-  X,
-  Layers,
-  CreditCard,
-  PackageSearch,
-  Truck,
-  CheckCircle2,
-  RotateCcw,
-  Ban
-} from 'lucide-vue-next'
+import { LogOut, Package, Heart, Bell, User, Coins, CreditCard, PackageSearch, Truck, CheckCircle2, RotateCcw, Ban, Layers } from 'lucide-vue-next'
+import ReviewModal from '../components/ReviewModal.vue'
 import { useAuthStore } from '../stores/authStore'
+import { useProductStore } from '../stores/productStore'
+import { useAdminStore } from '../stores/adminStore'
 
 const authStore = useAuthStore()
+const productStore = useProductStore()
+const adminStore = useAdminStore()
 const router = useRouter()
 
+// ★ 預設固定停留在 'orders' 頁籤，確保一進來就能看到步驟條與訂單
 const activeMainTab = ref('orders')
 const currentStatus = ref('ALL')
-const showAddressModal = ref(false)
-const isEditing = ref(false)
-const currentEditId = ref(null)
 
-// 7 個步驟
+const showReviewModal = ref(false)
+const activeOrder = ref(null)
+const activeItem = ref(null)
+const activeProductId = ref(1)
+
+// 7 個步驟條節點設定
 const interactiveSteps = [
   { key: 'ALL', title: '全部', desc: 'ALL', icon: Layers },
   { key: 'PENDING_PAYMENT', title: '待付款', desc: 'UNPAID', icon: CreditCard },
-  { key: 'PROCESSING', title: '備貨中', desc: 'PREPARING', icon: PackageSearch },
+  { key: 'PENDING', title: '備貨中', desc: 'PREPARING', icon: PackageSearch },
   { key: 'SHIPPED', title: '已出貨', desc: 'SHIPPED', icon: Truck },
-  { key: 'COMPLETED', title: '已完成', desc: 'DELIVERED', icon: CheckCircle2 },
+  { key: 'DELIVERED', title: '已送達', desc: 'DELIVERED', icon: CheckCircle2 },
   { key: 'REFUNDING', title: '售後中', desc: 'RETURN', icon: RotateCcw },
   { key: 'CANCELLED', title: '已取消', desc: 'CANCEL', icon: Ban }
 ]
 
-// 女裝風格訂單資料 (搭配 Unsplash 韓系風格服飾縮圖)
-const userOrders = ref([
-  {
-    id: 'ORD-20261106-01',
-    status: 'PENDING_PAYMENT',
-    amount: 1480,
-    shippingMethod: '7-11 超商取貨',
-    trackingCode: '',
-    createdAt: '2026-11-06 14:00',
-    items: [
-      { name: '極簡微抓皺鬆弛感雪紡襯衫 (燕麥白)', quantity: 1, price: 1480, image: 'https://images.unsplash.com/photo-1598554747436-c9293d6a588f?auto=format&fit=crop&w=300&q=80' }
-    ]
-  },
-  {
-    id: 'ORD-20261105-08',
-    status: 'PROCESSING',
-    amount: 2280,
-    shippingMethod: '黑貓宅配',
-    trackingCode: '',
-    createdAt: '2026-11-05 09:30',
-    items: [
-      { name: '法式廓形雙排扣毛呢短大衣 (奶茶咖)', quantity: 1, price: 2280, image: 'https://images.unsplash.com/photo-1539533018447-63fcce667883?auto=format&fit=crop&w=300&q=80' }
-    ]
-  },
-  {
-    id: 'ORD-20261104-12',
-    status: 'SHIPPED',
-    amount: 1980,
-    shippingMethod: '全家 超商取貨',
-    trackingCode: 'FAMI-9921448',
-    createdAt: '2026-11-04 14:15',
-    items: [
-      { name: '慵懶休閒垂墜感西裝落地寬褲 (灰杏)', quantity: 1, price: 990, image: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=300&q=80' },
-      { name: '修身方領針織打底上衣 (炭灰)', quantity: 1, price: 990, image: 'https://images.unsplash.com/photo-1434389677669-e08b4cac3105?auto=format&fit=crop&w=300&q=80' }
-    ]
-  },
-  {
-    id: 'ORD-20261102-03',
-    status: 'COMPLETED',
-    amount: 1680,
-    shippingMethod: '黑貓宅配',
-    trackingCode: '9021884299',
-    createdAt: '2026-11-02 10:10',
-    items: [
-      { name: '經典後開叉優雅針織直筒長裙 (淺燕麥)', quantity: 1, price: 1680, image: 'https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?auto=format&fit=crop&w=300&q=80' }
-    ]
-  },
-  {
-    id: 'ORD-20261029-05',
-    status: 'REFUNDING',
-    amount: 1280,
-    shippingMethod: '黑貓宅配',
-    trackingCode: '9021884110',
-    createdAt: '2026-10-29 11:20',
-    items: [
-      { name: '復古V領麻花針織排扣外套 (奶油杏)', quantity: 1, price: 1280, image: 'https://images.unsplash.com/photo-1485230895905-ec40ba36b9bc?auto=format&fit=crop&w=300&q=80' }
-    ]
-  },
-  {
-    id: 'ORD-20261025-01',
-    status: 'CANCELLED',
-    amount: 890,
-    shippingMethod: '7-11 超商取貨',
-    trackingCode: '',
-    createdAt: '2026-10-25 16:40',
-    items: [
-      { name: '高領軟糯羊絨感保暖發熱衣 (黑)', quantity: 1, price: 890, image: 'https://images.unsplash.com/photo-1576995853123-5a10305d93c0?auto=format&fit=crop&w=300&q=80' }
-    ]
-  }
-])
+const displayOrders = computed(() => adminStore.orders || [])
 
 const getOrderCount = (key) => {
-  if (key === 'ALL') return userOrders.value.length
-  return userOrders.value.filter((o) => o.status === key).length
+  if (key === 'ALL') return displayOrders.value.length
+  return displayOrders.value.filter((o) => (o.shippingStatus || o.status) === key).length
 }
 
 const filteredOrders = computed(() => {
-  if (currentStatus.value === 'ALL') return userOrders.value
-  return userOrders.value.filter((o) => o.status === currentStatus.value)
+  if (currentStatus.value === 'ALL') return displayOrders.value
+  return displayOrders.value.filter((o) => (o.shippingStatus || o.status) === currentStatus.value)
 })
 
+// 計算步驟條動態寬度
 const stepperProgressWidth = computed(() => {
-  const stepKeys = ['ALL', 'PENDING_PAYMENT', 'PROCESSING', 'SHIPPED', 'COMPLETED', 'REFUNDING', 'CANCELLED']
+  const stepKeys = ['ALL', 'PENDING_PAYMENT', 'PENDING', 'SHIPPED', 'DELIVERED', 'REFUNDING', 'CANCELLED']
   const idx = stepKeys.indexOf(currentStatus.value)
   if (idx <= 0) return '0%'
   const percentage = (idx / (stepKeys.length - 1)) * 100
-  return `min(${percentage}%, calc(100% - 2rem))`
+  return `min(${percentage}%, calc(100% - 2.5rem))`
 })
-
-const stepperLineClass = computed(() => {
-  if (currentStatus.value === 'CANCELLED') return 'bg-stone-300'
-  if (currentStatus.value === 'REFUNDING') return 'bg-rose-400'
-  return 'bg-brand-500'
-})
-
-const getNodeActiveClass = (key) => {
-  if (key === 'CANCELLED') return 'bg-stone-600 text-white shadow-xs'
-  if (key === 'REFUNDING') return 'bg-rose-500 text-white shadow-xs'
-  return 'bg-brand-600 text-white shadow-sm'
-}
 
 const getFilterTitle = (key) => {
   const item = interactiveSteps.find((s) => s.key === key)
@@ -482,100 +403,43 @@ const getFilterTitle = (key) => {
 const getStatusText = (status) => {
   const map = {
     PENDING_PAYMENT: '待付款',
-    PROCESSING: '備貨中',
-    SHIPPED: '已發貨',
-    COMPLETED: '交易完成',
+    PENDING: '備貨中',
+    SHIPPED: '已出貨',
+    DELIVERED: '交易完成',
     CANCELLED: '已取消',
     REFUNDING: '售後處理中'
   }
   return map[status] || status
 }
 
-// 韓系低飽和柔和標籤色
 const getBadgeClass = (status) => {
   const map = {
-    PENDING_PAYMENT: 'bg-amber-50 text-amber-700 border border-amber-200/50',
-    PROCESSING: 'bg-stone-100 text-stone-700 border border-stone-200',
-    SHIPPED: 'bg-brand-50 text-brand-700 border border-brand-200/60',
-    COMPLETED: 'bg-emerald-50 text-emerald-700 border border-emerald-200/50',
-    CANCELLED: 'bg-stone-100 text-stone-400',
-    REFUNDING: 'bg-rose-50 text-rose-600 border border-rose-200/50'
+    PENDING_PAYMENT: 'bg-warning-subtle text-warning-emphasis',
+    PENDING: 'bg-secondary-subtle text-secondary-emphasis',
+    SHIPPED: 'bg-info-subtle text-info-emphasis',
+    DELIVERED: 'bg-success-subtle text-success-emphasis',
+    CANCELLED: 'bg-light text-muted border',
+    REFUNDING: 'bg-danger-subtle text-danger-emphasis'
   }
-  return map[status] || 'bg-stone-100 text-stone-600'
+  return map[status] || 'bg-light text-dark'
 }
 
-const getTrackingUrl = (method, code) => {
-  if (method && method.includes('7-11')) {
-    return `https://eservice.7-11.com.tw/e-tracking/search.aspx?order_code=${code}`
-  } else if (method && method.includes('全家')) {
-    return `https://www.famiport.com.tw/Web_Famiport/page/process.aspx?bill_no=${code}`
-  }
-  return `https://www.t-cat.com.tw/Inquire/TraceDetail.aspx?BillID=${code}`
+const isItemReviewed = (orderId, itemName) => {
+  return productStore.reviews.some((r) => r.orderId === orderId)
 }
 
-const cancelOrder = (order) => {
-  if (confirm(`確定取消訂單 ${order.id} 嗎？`)) {
-    order.status = 'CANCELLED'
-  }
+const openReviewModal = (order, item) => {
+  activeOrder.value = order
+  activeItem.value = item
+  const found = productStore.products.find((p) => item.name.includes(p.name))
+  activeProductId.value = found ? found.id : 1
+  showReviewModal.value = true
 }
 
-const requestRefund = (order) => {
-  if (confirm(`確定為訂單 ${order.id} 申請售後退換貨嗎？`)) {
-    order.status = 'REFUNDING'
-  }
-}
-
-const profileForm = reactive({
-  name: authStore.user?.name || '陳大文',
-  email: authStore.user?.email || 'user@md-korea.com'
+const wishlistProducts = computed(() => {
+  const ids = authStore.user?.wishlist || []
+  return productStore.products.filter((p) => ids.includes(p.id))
 })
-
-const addressForm = reactive({
-  recipient: '',
-  phone: '',
-  address: '',
-  isDefault: false
-})
-
-const openAddAddressModal = () => {
-  isEditing.value = false
-  currentEditId.value = null
-  addressForm.recipient = authStore.user?.name || ''
-  addressForm.phone = authStore.user?.phone || ''
-  addressForm.address = ''
-  addressForm.isDefault = (authStore.user?.addresses || []).length === 0
-  showAddressModal.value = true
-}
-
-const openEditAddressModal = (addr) => {
-  isEditing.value = true
-  currentEditId.value = addr.id
-  addressForm.recipient = addr.recipient
-  addressForm.phone = addr.phone
-  addressForm.address = addr.address
-  addressForm.isDefault = addr.isDefault
-  showAddressModal.value = true
-}
-
-const saveAddress = () => {
-  if (isEditing.value && currentEditId.value) {
-    authStore.updateAddress(currentEditId.value, addressForm)
-  } else {
-    authStore.addAddress(addressForm)
-  }
-  showAddressModal.value = false
-}
-
-const handleRemoveAddress = (id) => {
-  if (confirm('確定刪除此地址？')) {
-    authStore.removeAddress(id)
-  }
-}
-
-const handleUpdateProfile = () => {
-  authStore.updateProfile(profileForm.name, profileForm.email)
-  alert('個人資料已更新')
-}
 
 const handleLogout = () => {
   if (confirm('確定登出？')) {
@@ -584,3 +448,7 @@ const handleLogout = () => {
   }
 }
 </script>
+
+<style scoped>
+.cursor-pointer { cursor: pointer; }
+</style>
