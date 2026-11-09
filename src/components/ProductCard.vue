@@ -1,71 +1,104 @@
 <template>
-  <div class="card card-korean h-100 shadow-xs border-0 overflow-hidden position-relative">
-    <!-- 愛心收藏按鈕 -->
-    <button
-      @click.stop="handleWishlistToggle"
-      class="btn btn-light rounded-circle position-absolute top-0 end-0 m-2 p-2 shadow-xs d-flex align-items-center justify-content-center"
-      style="z-index: 2; width: 32px; height: 32px;"
-      aria-label="加入收藏"
-    >
-      <Heart
-        style="width: 15px; height: 15px;"
-        :class="{ 'text-danger': authStore.isInWishlist(product.id), 'text-muted': !authStore.isInWishlist(product.id) }"
-        :fill="authStore.isInWishlist(product.id) ? 'currentColor' : 'none'"
-      />
-    </button>
-
-    <!-- 點擊照片直接跳轉至 PDP 獨立分頁 -->
+  <div class="product-item-wrap h-100">
+    <!-- 商品主要卡片區域 -->
     <div
-      class="position-relative overflow-hidden bg-light cursor-pointer"
-      style="aspect-ratio: 3/4;"
+      class="product-item h-100 cursor-pointer"
       @click="goToDetail"
     >
-      <img
-        :src="product.image"
-        :alt="product.name"
-        class="w-100 h-100 object-fit-cover transition"
-        style="transition: transform 0.5s ease;"
-        loading="lazy"
-      />
-      <span
-        v-if="product.tag"
-        class="position-absolute top-0 start-0 m-2 badge bg-dark opacity-75 font-monospace text-uppercase"
-        style="font-size: 9px; letter-spacing: 0.05em;"
+      <!-- ==================== 1. 商品影像區 (改為 1:1 正方比例，大幅壓縮長度) ==================== -->
+      <div
+        class="img-box position-relative overflow-hidden"
+        @mouseenter="isHovered = true"
+        @mouseleave="isHovered = false"
       >
-        {{ product.tag }}
-      </span>
-    </div>
+        <!-- 主圖 -->
+        <img
+          :src="product.image"
+          :alt="product.name"
+          class="main-img w-100 h-100 object-fit-cover transition"
+          :class="{ 'opacity-0': isHovered && hasSecondImage }"
+          loading="lazy"
+        />
 
-    <!-- 商品資訊 -->
-    <div class="card-body p-3 d-flex flex-column">
-      <div class="text-uppercase text-muted mb-1" style="font-size: 10px; letter-spacing: 0.05em; color: #9b7e68 !important;">
-        {{ product.category }}
+        <!-- 次圖 (Hover 平滑切換) -->
+        <img
+          v-if="hasSecondImage"
+          :src="secondImage"
+          :alt="product.name"
+          class="sub-img position-absolute top-0 start-0 w-100 h-100 object-fit-cover transition"
+          :class="{ 'opacity-100': isHovered, 'opacity-0': !isHovered }"
+          loading="lazy"
+        />
+
+        <!-- 商品角標 -->
+        <div v-if="product.tag" class="tag-badge-wrap position-absolute">
+          <span class="product-badge font-monospace">
+            {{ product.tag }}
+          </span>
+        </div>
+
+        <!-- 浮動愛心按鈕 -->
+        <button
+          @click.stop="handleWishlistToggle"
+          type="button"
+          class="heart-btn position-absolute"
+          :class="{ 'is-active': authStore.isInWishlist(product.id) }"
+          :aria-label="authStore.isInWishlist(product.id) ? '從願望清單移除' : '加入願望清單'"
+        >
+          <Heart
+            class="heart-icon"
+            :class="{ 'text-danger': authStore.isInWishlist(product.id) }"
+            :fill="authStore.isInWishlist(product.id) ? '#a85858' : 'none'"
+          />
+        </button>
+
+        <!-- 庫存少於 5 件預警標籤 -->
+        <div
+          v-if="isLowStock"
+          class="stock-warning-badge position-absolute bottom-0 start-0 w-100 text-center py-1 font-monospace"
+        >
+          即將售罄 · 庫存少於 5 件
+        </div>
       </div>
-      <h3
-        @click="goToDetail"
-        class="card-title text-dark fs-6 fw-normal text-truncate mb-2 cursor-pointer"
-      >
-        {{ product.name }}
-      </h3>
 
-      <div class="mt-auto d-flex align-items-baseline gap-2 mb-3">
-        <span class="fw-bold fs-6 font-monospace text-dark">NT$ {{ product.basePrice.toLocaleString() }}</span>
-        <span v-if="product.originalPrice" class="small text-muted text-decoration-line-through font-monospace">
-          NT$ {{ product.originalPrice.toLocaleString() }}
-        </span>
+      <!-- ==================== 2. 商品文字資訊區 (緊湊內距) ==================== -->
+      <div class="info-box d-flex flex-column justify-content-between flex-grow-1">
+        <div>
+          <!-- 分類名稱 -->
+          <div class="category-name text-uppercase font-monospace mb-1">
+            {{ product.category }}
+          </div>
+
+          <!-- 商品名稱 (單行截斷或緊湊兩行，節省高度) -->
+          <h3 class="product-name mb-1.5" :title="product.name">
+            {{ product.name }}
+          </h3>
+        </div>
+
+        <!-- 價格區塊 -->
+        <div class="price-row d-flex align-items-baseline gap-2 pt-0.5">
+          <span v-if="discountPercent > 0" class="discount-rate font-monospace fw-bold">
+            {{ discountPercent }}%
+          </span>
+
+          <span class="sale-price font-monospace">
+            NT$ {{ product.basePrice.toLocaleString() }}
+          </span>
+
+          <span
+            v-if="product.originalPrice && product.originalPrice > product.basePrice"
+            class="origin-price font-monospace text-muted text-decoration-line-through"
+          >
+            NT$ {{ product.originalPrice.toLocaleString() }}
+          </span>
+        </div>
       </div>
-
-      <button
-        @click="goToDetail"
-        class="btn btn-light btn-sm rounded-pill text-secondary w-100 fw-medium"
-      >
-        查看商品詳情
-      </button>
     </div>
   </div>
 </template>
 
 <script setup>
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Heart } from 'lucide-vue-next'
 import { useAuthStore } from '../stores/authStore'
@@ -80,6 +113,28 @@ const props = defineProps({
 const router = useRouter()
 const authStore = useAuthStore()
 
+const isHovered = ref(false)
+
+const hasSecondImage = computed(() => {
+  return props.product.images && props.product.images.length > 1
+})
+
+const secondImage = computed(() => {
+  return hasSecondImage.value ? props.product.images[1] : props.product.image
+})
+
+const discountPercent = computed(() => {
+  if (!props.product.originalPrice || props.product.originalPrice <= props.product.basePrice) {
+    return 0
+  }
+  return Math.round(((props.product.originalPrice - props.product.basePrice) / props.product.originalPrice) * 100)
+})
+
+const isLowStock = computed(() => {
+  if (!props.product.skus) return false
+  return props.product.skus.some((s) => s.stock > 0 && s.stock <= 5)
+})
+
 const goToDetail = () => {
   router.push(`/product/${props.product.id}`)
 }
@@ -89,3 +144,165 @@ const handleWishlistToggle = () => {
   alert(res.message)
 }
 </script>
+
+<style scoped>
+.product-item-wrap {
+  width: 100%;
+}
+
+/* 核心卡片容器：帶 1px 淺色細邊框 + 12px 圓角 */
+.product-item {
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+  border: 1px solid var(--md-border, #ede8e1);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(45, 38, 33, 0.04);
+  transition: transform 0.25s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.product-item:hover {
+  transform: translateY(-3px);
+  border-color: var(--md-border-dark, #ded6cb);
+  box-shadow: 0 6px 18px rgba(45, 38, 33, 0.08);
+}
+
+/* ★ 圖片比例優化：改為 1:1 正方形比例（若偏好微長可改為 4 / 4.5） ★ */
+.img-box {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background-color: var(--md-surface-subtle, #f5f2ed);
+  border-bottom: 1px solid var(--md-border-light, #f3efe9);
+}
+
+.main-img, .sub-img {
+  transition: transform 0.5s cubic-bezier(0.2, 0, 0, 1), opacity 0.35s ease;
+}
+
+.product-item:hover .main-img,
+.product-item:hover .sub-img {
+  transform: scale(1.04);
+}
+
+/* 商品標籤 */
+.tag-badge-wrap {
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+}
+
+.product-badge {
+  background-color: rgba(30, 25, 22, 0.85);
+  backdrop-filter: blur(4px);
+  color: #ffffff;
+  font-size: 8.5px;
+  letter-spacing: 0.06em;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+/* 浮動愛心按鈕 */
+.heart-btn {
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  background-color: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 3;
+  padding: 0;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.heart-btn:hover {
+  background-color: #ffffff;
+  transform: scale(1.08);
+}
+
+.heart-icon {
+  width: 14px;
+  height: 14px;
+  color: #9c9289;
+  transition: color 0.2s ease;
+}
+
+.heart-btn.is-active .heart-icon {
+  color: #a85858;
+}
+
+/* 庫存預警標籤 */
+.stock-warning-badge {
+  background: rgba(168, 88, 88, 0.88);
+  backdrop-filter: blur(4px);
+  color: #ffffff;
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  z-index: 2;
+}
+
+/* 2. 資訊區域：緊湊留白，大幅降低卡片高度 */
+.info-box {
+  padding: 0.75rem 0.9rem 0.85rem;
+}
+
+/* 分類名稱 */
+.category-name {
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  color: var(--md-primary, #9b7e68);
+  font-weight: 600;
+}
+
+/* 商品名稱：單行顯示並截斷（或最多兩行），消除過長空白 */
+.product-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--md-text-primary, #2d2621);
+  line-height: 1.35;
+  letter-spacing: 0.015em;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.15s ease;
+}
+
+.product-item:hover .product-name {
+  color: var(--md-primary, #9b7e68);
+}
+
+/* 價格排版 */
+.price-row {
+  line-height: 1;
+}
+
+/* 折扣率 */
+.discount-rate {
+  font-size: 0.9rem;
+  color: #b54949;
+}
+
+/* 實付售價 */
+.sale-price {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--md-text-primary, #2d2621);
+}
+
+/* 劃線原價 */
+.origin-price {
+  font-size: 0.725rem;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+</style>

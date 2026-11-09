@@ -2,9 +2,9 @@
   <Teleport to="body">
     <div
       v-if="isOpen"
-      class="modal fade show d-block"
+      class="modal fade show d-block modal-backdrop-custom"
       tabindex="-1"
-      style="background-color: rgba(0, 0, 0, 0.55); backdrop-filter: blur(3px); z-index: 1070;"
+      style="z-index: 1070;"
     >
       <div class="modal-dialog modal-dialog-centered" style="max-width: 500px;">
         <div class="modal-content rounded-4 border-0 p-4 shadow-xl">
@@ -19,7 +19,6 @@
           </div>
 
           <div class="modal-body small">
-            <!-- 關聯商品資訊 -->
             <div class="d-flex align-items-center gap-3 bg-light p-2.5 rounded-3 mb-3">
               <img :src="item?.image || product?.image" class="rounded object-fit-cover" style="width: 48px; height: 64px;" />
               <div class="min-w-0">
@@ -29,7 +28,6 @@
             </div>
 
             <form @submit.prevent="submitReview" class="d-flex flex-column gap-3">
-              <!-- 1. 星等選擇 (1~5 星) -->
               <div>
                 <label class="form-label text-dark fw-semibold mb-1">
                   總體評分 *：<span class="text-primary fw-bold">{{ ratingTexts[hoverRating || currentRating] }}</span>
@@ -54,7 +52,6 @@
                 </div>
               </div>
 
-              <!-- 2. 文字心得評價 -->
               <div>
                 <div class="d-flex justify-content-between align-items-center mb-1">
                   <label class="form-label text-dark fw-semibold mb-0">心得描述 *</label>
@@ -66,11 +63,10 @@
                   rows="3"
                   maxlength="300"
                   class="form-control form-control-sm rounded-3"
-                  placeholder="穿起來的版型、面料材質觸感如何？分享給其他喜愛韓系穿搭的朋友吧！"
+                  placeholder="穿起來的版型、材質觸感如何？分享給其他喜愛韓系穿搭的朋友吧！"
                 ></textarea>
               </div>
 
-              <!-- 3. 最多 5 張圖片上傳與曬圖預覽 -->
               <div>
                 <div class="d-flex justify-content-between align-items-center mb-1.5">
                   <label class="form-label text-dark fw-semibold mb-0">實穿曬圖（最多 5 張）</label>
@@ -78,11 +74,10 @@
                 </div>
 
                 <div class="d-flex flex-wrap gap-2">
-                  <!-- 已上傳縮圖預覽 -->
                   <div
                     v-for="(img, idx) in uploadedImages"
                     :key="idx"
-                    class="position-relative rounded-3 overflow-hidden border border-stone-200"
+                    class="position-relative rounded-3 overflow-hidden border"
                     style="width: 68px; height: 68px;"
                   >
                     <img :src="img" class="w-100 h-100 object-fit-cover" />
@@ -96,10 +91,9 @@
                     </button>
                   </div>
 
-                  <!-- 上傳按鈕（未達 5 張時顯示） -->
                   <label
                     v-if="uploadedImages.length < 5"
-                    class="d-flex flex-column align-items-center justify-content-center border border-dashed rounded-3 bg-light text-muted cursor-pointer transition hover-bg"
+                    class="d-flex flex-column align-items-center justify-content-center border border-dashed rounded-3 bg-light text-muted cursor-pointer hover-bg"
                     style="width: 68px; height: 68px;"
                   >
                     <Camera style="width: 20px; height: 20px;" class="mb-1 text-secondary" />
@@ -113,16 +107,12 @@
                     />
                   </label>
                 </div>
-                <div class="text-muted mt-1.5" style="font-size: 10px;">
-                  支援 JPG, PNG, WEBP 格式照片，單張請小於 5MB。
-                </div>
               </div>
 
-              <!-- 提交按鈕 -->
               <div class="pt-2">
                 <button
                   type="submit"
-                  class="btn btn-primary w-100 rounded-pill py-2.5 fw-bold tracking-wide"
+                  class="btn btn-primary w-100 rounded-pill py-2.5 fw-bold"
                   :disabled="!content.trim() || isSubmitting"
                 >
                   <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-1"></span>
@@ -170,11 +160,9 @@ const ratingTexts = {
   5: '非常完美！值得回購'
 }
 
-// 圖片上傳處理 (最多 5 張)
 const handleFileUpload = (e) => {
   const files = Array.from(e.target.files)
   if (!files.length) return
-
   const remainingSlots = 5 - uploadedImages.value.length
   const selectedFiles = files.slice(0, remainingSlots)
 
@@ -191,7 +179,6 @@ const handleFileUpload = (e) => {
     }
     reader.readAsDataURL(file)
   })
-
   e.target.value = ''
 }
 
@@ -207,13 +194,8 @@ const closeModal = () => {
 }
 
 const submitReview = () => {
-  if (!content.value.trim()) {
-    alert('請填寫心得描述！')
-    return
-  }
-
+  if (!content.value.trim()) return
   isSubmitting.value = true
-
   const res = productStore.addReview({
     productId: props.productId || props.product?.id,
     orderId: props.orderId,
@@ -223,7 +205,6 @@ const submitReview = () => {
     content: content.value,
     images: uploadedImages.value
   })
-
   isSubmitting.value = false
   alert(res.message)
   emit('submitted')

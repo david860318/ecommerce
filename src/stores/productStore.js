@@ -9,15 +9,16 @@ export const useProductStore = defineStore('product', () => {
       category: 'Top 上衣',
       basePrice: 1380,
       originalPrice: 1680,
-      status: 'ACTIVE', // ACTIVE 上架 | INACTIVE 下架
+      status: 'ACTIVE',
       image: 'https://images.unsplash.com/photo-1598554747436-c9293d6a588f?auto=format&fit=crop&w=800&q=80',
       images: [
-        'https://images.unsplash.com/photo-1598554747436-c9293d6a588f?auto=format&fit=crop&w=1200&q=80'
+        'https://images.unsplash.com/photo-1598554747436-c9293d6a588f?auto=format&fit=crop&w=1200&q=80',
+        'https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?auto=format&fit=crop&w=1200&q=80'
       ],
       tag: 'NEW',
       salesCount: 320,
       createdAt: '2026-11-05 10:00:00',
-      descriptionHtml: '<p>嚴選<strong>親膚垂墜雪紡面料</strong>，領口微抓皺法式剪裁，走動間呈現極具質感的流動線條。</p><ul><li>產地：韓國製（Made in Korea）</li><li>版型：慵懶寬鬆落肩</li></ul>',
+      descriptionHtml: '<p>嚴選親膚垂墜雪紡面料，領口微抓皺法式剪裁，展現慵懶氣質。</p>',
       description: '嚴選親膚垂墜雪紡面料，領口自然抓皺剪裁，展現慵懶不造作的韓系鬆弛美感。',
       skus: [
         { skuId: 'TOP-01-CRM-F', color: '奶油杏', size: 'FREE', price: 1380, stock: 15 },
@@ -90,6 +91,23 @@ export const useProductStore = defineStore('product', () => {
     }
   ])
 
+  // 評價資料庫
+  const reviews = ref([
+    {
+      id: 'REV-1001',
+      productId: 1,
+      orderId: 'ORD-20261102-03',
+      userName: '陳大文',
+      userPhone: '0912345678',
+      rating: 5,
+      content: '布料觸感非常軟糯舒服，燕麥奶色非常顯白，自然垂墜感很好，上班休閒穿都適合！',
+      images: [
+        'https://images.unsplash.com/photo-1598554747436-c9293d6a588f?auto=format&fit=crop&w=600&q=80'
+      ],
+      createdAt: '2026-11-05 18:30'
+    }
+  ])
+
   const categories = ref(['全部商品', 'Top 上衣', 'Outer 外套', 'Bottom 下身', 'Dress 裙裝'])
   const selectedCategory = ref('全部商品')
   const searchInput = ref('')
@@ -100,16 +118,16 @@ export const useProductStore = defineStore('product', () => {
     searchInput.value = val
     if (debounceTimer) clearTimeout(debounceTimer)
     debounceTimer = setTimeout(() => {
-      debouncedSearchQuery.value = val.trim()
+      debouncedSearchQuery.value = (val || '').trim()
       currentPage.value = 1
     }, 300)
   }
 
   const sortBy = ref('default')
   const currentPage = ref(1)
-  const pageSize = ref(4)
+  const pageSize = ref(8)
   const viewMode = ref('pagination')
-  const loadedCount = ref(4)
+  const loadedCount = ref(8)
 
   const setCategory = (cat) => {
     selectedCategory.value = cat
@@ -123,21 +141,20 @@ export const useProductStore = defineStore('product', () => {
     loadedCount.value = pageSize.value
   }
 
-  // 前台只展示 ACTIVE 上架商品
+  // 前台商品過濾（相容缺少 status 欄位的商品，預設皆為上架）
   const filteredProducts = computed(() => {
     const query = debouncedSearchQuery.value.toLowerCase()
     return products.value
       .filter((p) => {
-        const isOnline = p.status === 'ACTIVE'
+        const isOnline = p.status ? p.status === 'ACTIVE' : true
         const matchCategory =
           selectedCategory.value === '全部商品' || p.category === selectedCategory.value
         if (!isOnline || !matchCategory) return false
         if (!query) return true
         return (
           p.name.toLowerCase().includes(query) ||
-          p.description.toLowerCase().includes(query) ||
-          p.category.toLowerCase().includes(query) ||
-          p.skus.some((s) => s.color.toLowerCase().includes(query))
+          (p.description && p.description.toLowerCase().includes(query)) ||
+          p.category.toLowerCase().includes(query)
         )
       })
       .sort((a, b) => {
@@ -176,8 +193,43 @@ export const useProductStore = defineStore('product', () => {
     return products.value.find((p) => p.id === Number(id))
   }
 
-  // ==================== 後台專用：SPU / SKU 新增、修改與批次處理 (AD-02) ====================
-  // 1. 新增商品
+  const getProductReviews = (productId) => {
+    return reviews.value.filter((r) => r.productId === Number(productId))
+  }
+
+  const getProductRatingSummary = (productId) => {
+    const pReviews = getProductReviews(productId)
+    if (pReviews.length === 0) {
+      return { average: 5.0, count: 0, breakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 } }
+    }
+    const sum = pReviews.reduce((acc, cur) => acc + cur.rating, 0)
+    const breakdown = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+    pReviews.forEach((r) => {
+      if (breakdown[r.rating] !== undefined) breakdown[r.rating]++
+    })
+    return {
+      average: Number((sum / pReviews.length).toFixed(1)),
+      count: pReviews.length,
+      breakdown
+    }
+  }
+
+  const addReview = (reviewData) => {
+    const newRev = {
+      id: 'REV-' + Date.now().toString().slice(-6),
+      productId: Number(reviewData.productId),
+      orderId: reviewData.orderId,
+      userName: reviewData.userName,
+      userPhone: reviewData.userPhone,
+      rating: Number(reviewData.rating),
+      content: reviewData.content.trim(),
+      images: (reviewData.images || []).slice(0, 5),
+      createdAt: new Date().toISOString().slice(0, 16).replace('T', ' ')
+    }
+    reviews.value.unshift(newRev)
+    return { success: true, message: '感謝您的真實心得與曬圖分享！' }
+  }
+
   const addNewProduct = (productData) => {
     const nextId = products.value.length > 0 ? Math.max(...products.value.map((p) => p.id)) + 1 : 1
     const newProduct = {
@@ -194,23 +246,17 @@ export const useProductStore = defineStore('product', () => {
       createdAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
       descriptionHtml: productData.descriptionHtml || `<p>${productData.name}</p>`,
       description: productData.description || productData.name,
-      skus: productData.skus.map((s, idx) => ({
-        skuId: s.skuId || `SKU-${nextId}-${idx + 1}`,
-        color: s.color,
-        size: s.size,
-        price: Number(s.price || productData.basePrice),
-        stock: Number(s.stock || 0)
-      }))
+      skus: productData.skus && productData.skus.length > 0 ? productData.skus : [
+        { skuId: `SKU-${nextId}-01`, color: '預設色', size: 'FREE', price: Number(productData.basePrice), stock: 10 }
+      ]
     }
     products.value.unshift(newProduct)
     return { success: true, product: newProduct }
   }
 
-  // 2. 編輯更新商品
   const updateProduct = (productId, updatedData) => {
     const idx = products.value.findIndex((p) => p.id === Number(productId))
     if (idx === -1) return { success: false, message: '商品不存在' }
-
     products.value[idx] = {
       ...products.value[idx],
       name: updatedData.name,
@@ -219,31 +265,22 @@ export const useProductStore = defineStore('product', () => {
       originalPrice: Number(updatedData.originalPrice || updatedData.basePrice),
       status: updatedData.status,
       image: updatedData.image,
-      images: updatedData.images && updatedData.images.length > 0 ? updatedData.images : [updatedData.image],
       descriptionHtml: updatedData.descriptionHtml,
       description: updatedData.description || updatedData.name,
-      skus: updatedData.skus.map((s, sIdx) => ({
-        skuId: s.skuId || `SKU-${productId}-${sIdx + 1}`,
-        color: s.color,
-        size: s.size,
-        price: Number(s.price || updatedData.basePrice),
-        stock: Number(s.stock || 0)
-      }))
+      skus: updatedData.skus
     }
     return { success: true, product: products.value[idx] }
   }
 
-  // 3. 刪除商品
   const deleteProduct = (productId) => {
     const idx = products.value.findIndex((p) => p.id === Number(productId))
     if (idx !== -1) {
       const deleted = products.value.splice(idx, 1)[0]
       return { success: true, product: deleted }
     }
-    return { success: false, message: '找不到該商品' }
+    return { success: false }
   }
 
-  // 4. 一鍵批次上下架
   const batchToggleStatus = (productIds, targetStatus) => {
     let count = 0
     products.value.forEach((p) => {
@@ -255,7 +292,6 @@ export const useProductStore = defineStore('product', () => {
     return { success: true, count }
   }
 
-  // 5. 一鍵批次調整價格 (支援百分比打折或固定金額)
   const batchAdjustPrice = (productIds, mode, val) => {
     let count = 0
     products.value.forEach((p) => {
@@ -265,36 +301,30 @@ export const useProductStore = defineStore('product', () => {
         } else if (mode === 'FIXED') {
           p.basePrice = Math.max(1, p.basePrice + Number(val))
         }
-        // 同步各規格 SKU 售價
-        p.skus.forEach((s) => {
-          s.price = p.basePrice
-        })
+        p.skus.forEach((s) => { s.price = p.basePrice })
         count++
       }
     })
     return { success: true, count }
   }
 
-  // 6. 一鍵批次調整庫存 (統一增減或設為固定值)
   const batchAdjustStock = (productIds, mode, val) => {
-    let skuCount = 0
+    let count = 0
     products.value.forEach((p) => {
       if (productIds.includes(p.id)) {
         p.skus.forEach((s) => {
-          if (mode === 'SET') {
-            s.stock = Math.max(0, Number(val))
-          } else if (mode === 'ADD') {
-            s.stock = Math.max(0, s.stock + Number(val))
-          }
-          skuCount++
+          if (mode === 'SET') s.stock = Math.max(0, Number(val))
+          else if (mode === 'ADD') s.stock = Math.max(0, s.stock + Number(val))
+          count++
         })
       }
     })
-    return { success: true, count: skuCount }
+    return { success: true, count }
   }
 
   return {
     products,
+    reviews,
     categories,
     selectedCategory,
     searchInput,
@@ -313,6 +343,9 @@ export const useProductStore = defineStore('product', () => {
     goToPage,
     loadMore,
     getProductById,
+    getProductReviews,
+    getProductRatingSummary,
+    addReview,
     addNewProduct,
     updateProduct,
     deleteProduct,

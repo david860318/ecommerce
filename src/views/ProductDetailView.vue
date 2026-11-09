@@ -10,7 +10,7 @@
     </nav>
 
     <div class="row g-4 g-lg-5 mb-5">
-      <!-- 左側多圖輪播與縮圖展示 -->
+      <!-- 左側多圖輪播 -->
       <div class="col-12 col-md-6">
         <div class="d-flex flex-column gap-3">
           <div
@@ -50,7 +50,7 @@
       <!-- 右側規格選擇與購買操作 -->
       <div class="col-12 col-md-6 d-flex flex-column">
         <div class="d-flex justify-content-between align-items-center mb-1">
-          <span class="text-uppercase small fw-bold" style="color: #9b7e68; font-size: 11px; letter-spacing: 0.1em;">
+          <span class="text-uppercase small fw-bold" style="color: var(--md-primary); font-size: 11px; letter-spacing: 0.1em;">
             {{ product.category }}
           </span>
           <span class="small text-muted font-monospace">已售出 {{ product.salesCount }} 件</span>
@@ -61,7 +61,7 @@
         </h1>
 
         <div class="d-flex align-items-baseline gap-2 mb-4">
-          <span class="fs-4 fw-bold font-monospace" style="color: #9b7e68;">
+          <span class="fs-4 fw-bold font-monospace" style="color: var(--md-primary);">
             NT$ {{ activePrice.toLocaleString() }}
           </span>
           <span v-if="activeOriginalPrice" class="small text-muted text-decoration-line-through font-monospace">
@@ -69,8 +69,10 @@
           </span>
         </div>
 
-        <p class="text-secondary small leading-relaxed mb-4">{{ product.description }}</p>
-        <hr class="border-stone-200/80 my-2" />
+        <!-- 富文本與簡述 -->
+        <div v-if="product.descriptionHtml" class="small text-secondary mb-3" v-html="product.descriptionHtml"></div>
+        <p v-else class="text-secondary small leading-relaxed mb-4">{{ product.description }}</p>
+        <hr class="border-stone-200 my-2" />
 
         <!-- 顏色規格 -->
         <div class="mb-3">
@@ -96,7 +98,7 @@
           <div class="d-flex justify-content-between align-items-center mb-2">
             <span class="small fw-semibold text-dark">選擇尺寸：<strong class="text-primary">{{ selectedSize }}</strong></span>
             <span class="small font-monospace" :class="isOutOfStock ? 'text-danger fw-bold' : 'text-muted'">
-              {{ isOutOfStock ? '● 該規格已售完 / 斷貨' : `剩餘庫存：${currentSku?.stock || 0} 件` }}
+              {{ isOutOfStock ? '● 該規格已斷貨售完' : `剩餘庫存：${currentSku?.stock || 0} 件` }}
             </span>
           </div>
           <div class="d-flex gap-2 flex-wrap">
@@ -113,7 +115,7 @@
           </div>
         </div>
 
-        <!-- 購買數量選擇器 -->
+        <!-- 選購數量 -->
         <div class="mb-4" v-if="!isOutOfStock">
           <label class="small fw-semibold text-dark mb-2 d-block">選購數量：</label>
           <div class="d-flex align-items-center gap-2" style="width: 140px;">
@@ -123,7 +125,7 @@
           </div>
         </div>
 
-        <!-- 加入購物車或貨到通知 -->
+        <!-- 加入購物車或補貨提醒 -->
         <div class="d-flex gap-3 mb-4">
           <button
             v-if="!isOutOfStock"
@@ -161,7 +163,7 @@
 
         <div class="card-korean p-3 small text-muted mb-4 bg-light">
           <div class="d-flex align-items-center gap-2 mb-1">
-            <Truck style="width: 16px; height: 16px;" class="text-primary" />
+            <Truck style="width: 16px; height: 16px; color: var(--md-primary);" />
             <span>全館滿 <strong>NT$ 1,500</strong> 享免運</span>
           </div>
           <div class="d-flex align-items-center gap-2">
@@ -172,7 +174,7 @@
       </div>
     </div>
 
-    <!-- ==================== 商品評價與曬圖 UGC 區塊 ==================== -->
+    <!-- 顧客真實評價專區 (UGC) -->
     <section class="mt-5 pt-4 border-top">
       <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
@@ -180,7 +182,6 @@
           <p class="small text-muted mb-0">來自已購買顧客的真實評價與實穿實拍</p>
         </div>
 
-        <!-- 撰寫評價按鈕 -->
         <div>
           <button
             v-if="canReviewCurrentProduct"
@@ -191,12 +192,12 @@
             ★ 撰寫我的評價與曬圖
           </button>
           <span v-else class="text-muted small" style="font-size: 11px;">
-            ※ 僅限完成訂單取件之顧客留評
+            ※ 僅限完成訂單送達之顧客留評
           </span>
         </div>
       </div>
 
-      <!-- 評分總覽卡片 -->
+      <!-- 評分總覽 -->
       <div class="card-korean p-4 bg-white shadow-xs mb-4">
         <div class="row g-4 align-items-center">
           <div class="col-12 col-md-4 text-center border-end-md">
@@ -230,10 +231,10 @@
         </div>
       </div>
 
-      <!-- 評價列表 -->
+      <!-- 評價清單 -->
       <div v-if="productReviews.length === 0" class="card-korean text-center py-5 text-muted bg-white">
         <MessageSquare style="width: 38px; height: 38px;" class="mb-2 opacity-30" />
-        <div class="small">此商品目前尚無評價，歡迎已完成購買的顧客留下第一則心得！</div>
+        <div class="small">此商品目前尚無評價，歡迎完成購買之會員留下第一則心得！</div>
       </div>
 
       <div v-else class="d-flex flex-column gap-3">
@@ -262,16 +263,14 @@
             <span class="text-muted font-monospace small" style="font-size: 11px;">{{ rev.createdAt }}</span>
           </div>
 
-          <!-- 評價文字 -->
           <p class="text-secondary small mb-3 leading-relaxed">{{ rev.content }}</p>
 
-          <!-- 曬圖縮圖預覽 -->
           <div v-if="rev.images && rev.images.length > 0" class="d-flex gap-2 flex-wrap">
             <img
               v-for="(img, iIdx) in rev.images"
               :key="iIdx"
               :src="img"
-              class="rounded-3 object-fit-cover border border-stone-200 cursor-pointer transition hover-zoom"
+              class="rounded-3 object-fit-cover border cursor-pointer hover-zoom"
               style="width: 76px; height: 76px;"
               @click="previewImage(img)"
             />
@@ -290,37 +289,64 @@
       @submitted="onReviewSubmitted"
     />
 
-    <!-- 曬圖全螢幕燈箱預覽 -->
+    <!-- 補貨登記彈窗 -->
     <Teleport to="body">
       <div
-        v-if="lightboxImg"
-        class="position-fixed top-0 start-0 w-100 h-100 bg-black bg-opacity-90 d-flex align-items-center justify-content-center p-3"
-        style="z-index: 1080;"
-        @click="lightboxImg = null"
+        v-if="showRestockModal"
+        class="modal fade show d-block modal-backdrop-custom"
+        tabindex="-1"
+        style="z-index: 1065;"
       >
-        <img :src="lightboxImg" class="rounded-3 shadow-lg object-fit-contain" style="max-width: 90vw; max-height: 85vh;" />
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
+          <div class="modal-content rounded-4 border-0 p-4 shadow-xl">
+            <div class="modal-header border-0 pb-0">
+              <h3 class="modal-title fs-6 fw-bold text-dark d-flex align-items-center gap-2">
+                <Bell style="width: 18px; height: 18px; color: var(--md-primary);" />
+                <span>登記補貨提醒通知</span>
+              </h3>
+              <button type="button" class="btn-close" @click="showRestockModal = false"></button>
+            </div>
+            <div class="modal-body small">
+              <div class="bg-light p-3 rounded-3 mb-3 font-monospace">
+                <div class="fw-bold text-dark mb-1">{{ product.name }}</div>
+                <div class="text-muted" style="font-size: 11px;">預約規格：<span class="text-primary fw-bold">{{ currentSku?.color }} / {{ currentSku?.size }}</span></div>
+              </div>
+
+              <form @submit.prevent="submitRestockAlert" class="d-flex flex-column gap-3">
+                <div>
+                  <label class="form-label mb-1">通知信箱 Email *</label>
+                  <input v-model="restockForm.email" required type="email" class="form-control form-control-sm font-monospace" placeholder="your@email.com" />
+                </div>
+                <div>
+                  <label class="form-label mb-1">通知手機 SMS (選填)</label>
+                  <input v-model="restockForm.phone" type="tel" pattern="^09\d{8}$" class="form-control form-control-sm font-monospace" placeholder="0912345678" />
+                </div>
+                <button type="submit" class="btn btn-primary w-100 rounded-pill py-2.5 fw-bold mt-2">
+                  確認登記補貨提醒
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- 商品大圖燈箱 -->
+      <!-- 燈箱預覽 -->
       <div
-        v-if="showLightbox"
+        v-if="lightboxImg || showLightbox"
         class="position-fixed top-0 start-0 w-100 h-100 bg-black bg-opacity-90 d-flex align-items-center justify-content-center p-3"
-        style="z-index: 1060; backdrop-filter: blur(4px);"
-        @click.self="showLightbox = false"
+        style="z-index: 1080;"
+        @click="lightboxImg = null; showLightbox = false;"
       >
-        <button @click="showLightbox = false" class="position-absolute top-0 end-0 m-4 btn btn-link text-white p-2">
-          <X style="width: 28px; height: 28px;" />
-        </button>
-        <img :src="currentImage" class="rounded-3 shadow-lg object-fit-contain" style="max-width: 90vw; max-height: 85vh;" />
+        <img :src="lightboxImg || currentImage" class="rounded-3 shadow-lg object-fit-contain" style="max-width: 90vw; max-height: 85vh;" />
       </div>
     </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { ShoppingBag, Heart, Maximize2, X, Truck, CheckCircle2, Bell, Star, MessageSquare } from 'lucide-vue-next'
+import { ShoppingBag, Heart, Maximize2, Truck, CheckCircle2, Bell, Star, MessageSquare } from 'lucide-vue-next'
 import ReviewModal from '../components/ReviewModal.vue'
 import { useProductStore } from '../stores/productStore'
 import { useCartStore } from '../stores/cartStore'
@@ -345,11 +371,17 @@ const allImages = computed(() => {
 const currentImage = ref('')
 const showLightbox = ref(false)
 const showReviewModal = ref(false)
+const showRestockModal = ref(false)
 const lightboxImg = ref(null)
 
 const selectedColor = ref('')
 const selectedSize = ref('')
 const quantity = ref(1)
+
+const restockForm = reactive({
+  email: '',
+  phone: ''
+})
 
 const availableColors = computed(() => [...new Set((product.value?.skus || []).map((s) => s.color))])
 const availableSizes = computed(() => [...new Set((product.value?.skus || []).map((s) => s.size))])
@@ -362,7 +394,6 @@ const activePrice = computed(() => currentSku.value?.price || product.value?.bas
 const activeOriginalPrice = computed(() => currentSku.value?.originalPrice || product.value?.originalPrice || null)
 const isOutOfStock = computed(() => !currentSku.value || currentSku.value.stock <= 0)
 
-// 購買檢驗：訂單已送達 (DELIVERED) 且包含該商品
 const eligibleOrder = computed(() => {
   if (!authStore.user?.isLoggedIn) return null
   return (adminStore.orders || []).find((o) => {
@@ -375,15 +406,9 @@ const eligibleOrder = computed(() => {
 const canReviewCurrentProduct = computed(() => !!eligibleOrder.value)
 const eligibleOrderId = computed(() => eligibleOrder.value?.id || 'ORD-VERIFIED')
 
-const previewImage = (img) => {
-  lightboxImg.value = img
-}
-
-const onReviewSubmitted = () => {
-  showReviewModal.value = false
-}
-
+const previewImage = (img) => { lightboxImg.value = img }
 const openLightbox = () => { showLightbox.value = true }
+const onReviewSubmitted = () => { showReviewModal.value = false }
 
 const initDefaults = () => {
   if (product.value) {
@@ -406,6 +431,22 @@ const handleWishlistToggle = () => {
   }
 }
 
+const openRestockModal = () => {
+  if (!authStore.user?.isLoggedIn) {
+    alert('請先登入會員以登記補貨提醒！')
+    return
+  }
+  restockForm.email = authStore.user.email || ''
+  restockForm.phone = authStore.user.phone || ''
+  showRestockModal.value = true
+}
+
+const submitRestockAlert = () => {
+  const res = authStore.registerRestockAlert(product.value, currentSku.value, restockForm)
+  alert(res.message)
+  if (res.success) showRestockModal.value = false
+}
+
 const handleAddToCart = () => {
   if (!currentSku.value || isOutOfStock.value) return
   const res = cartStore.addToCart(product.value, currentSku.value, quantity.value)
@@ -415,7 +456,7 @@ const handleAddToCart = () => {
 
 <style scoped>
 .cursor-zoom-in { cursor: zoom-in; }
-.ring-2 { outline: 2px solid #9b7e68; }
+.ring-2 { outline: 2px solid var(--md-primary); }
 .hover-zoom:hover { transform: scale(1.05); }
 .cursor-pointer { cursor: pointer; }
 </style>
