@@ -4,6 +4,8 @@ import ProductDetailView from '../views/ProductDetailView.vue'
 import CheckoutView from '../views/CheckoutView.vue'
 import ProfileView from '../views/ProfileView.vue'
 import AdminLayout from '../views/admin/AdminLayout.vue'
+import OrderSuccessView from '../views/OrderSuccessView.vue'
+import CategoryView from '../views/CategoryView.vue'
 import { useAuthStore } from '../stores/authStore'
 
 export const router = createRouter({
@@ -13,6 +15,11 @@ export const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView
+    },
+    {
+      path: '/category/:categoryName',
+      name: 'category',
+      component: CategoryView
     },
     {
       path: '/product/:id',
@@ -25,6 +32,11 @@ export const router = createRouter({
       component: CheckoutView
     },
     {
+      path: '/order-success',
+      name: 'order-success',
+      component: OrderSuccessView
+    },
+    {
       path: '/profile',
       name: 'profile',
       component: ProfileView
@@ -33,7 +45,12 @@ export const router = createRouter({
       path: '/admin',
       name: 'admin-portal',
       component: AdminLayout,
-      meta: { requiresAdmin: true } // ★ 標記此頁面需管理者權限
+      meta: { requiresAdmin: true }
+    },
+    {
+      // 捕獲所有找不到的路由，一律回到首頁
+      path: '/:pathMatch(.*)*',
+      redirect: '/'
     }
   ],
   scrollBehavior() {
@@ -41,15 +58,17 @@ export const router = createRouter({
   }
 })
 
-// ★ 全域路由守衛：未具備管理者權限時阻擋進入 /admin
+// 全域守衛安全防護：確保每條路徑一定會走到 next()
 router.beforeEach((to, from, next) => {
-  if (to.meta.requiresAdmin) {
+  if (to.meta && to.meta.requiresAdmin) {
     const authStore = useAuthStore()
     if (!authStore.isAdmin) {
       alert('【權限不足】您目前的帳號身分非管理員，無法造訪後台系統！')
-      next({ path: '/' })
-      return
+      return next({ path: '/' })
     }
   }
+  // 正常放行
   next()
 })
+
+export default router

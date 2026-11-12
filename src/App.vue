@@ -1,9 +1,14 @@
 <template>
-  <div class="d-flex flex-column min-vh-100">
+  <div id="app" class="d-flex flex-column min-vh-100">
+    <!-- 頂部導覽列 -->
     <Navbar />
+
+    <!-- ★ 核心：頁面切換容器 (如果缺了這行，全站都是白畫面) ★ -->
     <div class="flex-grow-1">
       <router-view />
     </div>
+
+    <!-- 購物車抽屜 -->
     <CartDrawer />
   </div>
 </template>

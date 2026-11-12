@@ -49,7 +49,7 @@
           </div>
         </div>
 
-        <!-- 右側：點數資產與登出按鈕 (手機端自適應橫向排版) -->
+        <!-- 右側：點數資產與登出按鈕 -->
         <div class="member-assets-panel d-flex align-items-center justify-content-between gap-2.5 gap-md-3">
           <div class="points-asset-card p-2.5 p-sm-3 rounded-3 border d-flex flex-column justify-content-between flex-grow-1 flex-lg-grow-0">
             <div class="d-flex justify-content-between align-items-center gap-2">
@@ -97,7 +97,7 @@
       </div>
     </div>
 
-    <!-- ==================== 2. 頁籤導覽列 (手機端橫向平滑捲動，絕不折行) ==================== -->
+    <!-- ==================== 2. 頁籤導覽列 (橫向捲動防折行) ==================== -->
     <div class="tabs-scroll-container mb-3.5 mb-md-4 border-bottom">
       <ul class="nav nav-underline d-flex flex-nowrap no-scrollbar pb-0.5 gap-1 gap-md-2">
         <li class="nav-item flex-shrink-0">
@@ -231,7 +231,7 @@
         <div class="small">在此狀態下尚無訂單資料</div>
       </div>
 
-      <!-- 訂單清單卡片 (RWD 排版自適應) -->
+      <!-- 訂單清單卡片 -->
       <div v-for="order in filteredOrders" :key="order.id" class="card-korean p-3 p-sm-4 shadow-sm bg-white">
         <div class="d-flex justify-content-between align-items-center border-bottom pb-2.5 mb-2.5 flex-wrap gap-2">
           <div class="d-flex align-items-center gap-2 gap-sm-3">
@@ -292,7 +292,7 @@
       </div>
     </div>
 
-    <!-- ==================== 模組 2：常用收件地址管理 (RWD 卡片對齊) ==================== -->
+    <!-- ==================== 模組 2：常用收件地址管理 ==================== -->
     <div v-if="activeMainTab === 'addresses'" class="d-flex flex-column gap-3">
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div>
@@ -857,7 +857,6 @@ const handleLogout = () => {
   margin: 0 auto;
 }
 
-/* ==================== 1. 名片卡片 RWD 樣式 ==================== */
 .member-card-hero {
   background: linear-gradient(135deg, #ffffff 0%, #faf8f5 100%) !important;
   border-radius: 16px !important;
@@ -937,7 +936,6 @@ const handleLogout = () => {
   height: 38px;
 }
 
-/* ==================== 2. 頁籤橫向滾動 RWD ==================== */
 .tabs-scroll-container {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -952,7 +950,6 @@ const handleLogout = () => {
   height: 14px;
 }
 
-/* ==================== 3. 步驟條橫向滾動 ==================== */
 .stepper-scroll-wrapper {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -1076,7 +1073,6 @@ const handleLogout = () => {
   outline: 2px solid var(--md-primary, #9b7e68);
 }
 
-/* Modal 手機端小螢幕邊距保護 */
 @media (max-width: 575.98px) {
   .modal-sm-custom {
     margin: 0.75rem;

@@ -1,11 +1,10 @@
 <template>
   <div class="product-item-wrap h-100">
-    <!-- 商品主要卡片區域 -->
     <div
       class="product-item h-100 cursor-pointer"
       @click="goToDetail"
     >
-      <!-- ==================== 1. 商品影像區 (改為 1:1 正方比例，大幅壓縮長度) ==================== -->
+      <!-- 1. 圖片容器 (1:1 比例壓縮高度，細邊框，角標與愛心內縮 14px) -->
       <div
         class="img-box position-relative overflow-hidden"
         @mouseenter="isHovered = true"
@@ -30,14 +29,14 @@
           loading="lazy"
         />
 
-        <!-- 商品角標 -->
+        <!-- 商品角標 (內縮 14px，不貼齊邊框) -->
         <div v-if="product.tag" class="tag-badge-wrap position-absolute">
           <span class="product-badge font-monospace">
             {{ product.tag }}
           </span>
         </div>
 
-        <!-- 浮動愛心按鈕 -->
+        <!-- 浮動愛心按鈕 (內縮 14px，不貼齊邊框) -->
         <button
           @click.stop="handleWishlistToggle"
           type="button"
@@ -52,7 +51,7 @@
           />
         </button>
 
-        <!-- 庫存少於 5 件預警標籤 -->
+        <!-- 庫存少於 5 件預警 -->
         <div
           v-if="isLowStock"
           class="stock-warning-badge position-absolute bottom-0 start-0 w-100 text-center py-1 font-monospace"
@@ -61,7 +60,7 @@
         </div>
       </div>
 
-      <!-- ==================== 2. 商品文字資訊區 (緊湊內距) ==================== -->
+      <!-- 2. 資訊區域 (緊湊內距，消除過度留白) -->
       <div class="info-box d-flex flex-column justify-content-between flex-grow-1">
         <div>
           <!-- 分類名稱 -->
@@ -69,13 +68,13 @@
             {{ product.category }}
           </div>
 
-          <!-- 商品名稱 (單行截斷或緊湊兩行，節省高度) -->
+          <!-- 商品名稱 (單行截斷) -->
           <h3 class="product-name mb-1.5" :title="product.name">
             {{ product.name }}
           </h3>
         </div>
 
-        <!-- 價格區塊 -->
+        <!-- 價格區塊 (折數 % + 實付價 + 原價) -->
         <div class="price-row d-flex align-items-baseline gap-2 pt-0.5">
           <span v-if="discountPercent > 0" class="discount-rate font-monospace fw-bold">
             {{ discountPercent }}%
@@ -150,7 +149,6 @@ const handleWishlistToggle = () => {
   width: 100%;
 }
 
-/* 核心卡片容器：帶 1px 淺色細邊框 + 12px 圓角 */
 .product-item {
   display: flex;
   flex-direction: column;
@@ -168,7 +166,7 @@ const handleWishlistToggle = () => {
   box-shadow: 0 6px 18px rgba(45, 38, 33, 0.08);
 }
 
-/* ★ 圖片比例優化：改為 1:1 正方形比例（若偏好微長可改為 4 / 4.5） ★ */
+/* 1:1 正方比例圖片容器 */
 .img-box {
   width: 100%;
   aspect-ratio: 1 / 1;
@@ -185,10 +183,10 @@ const handleWishlistToggle = () => {
   transform: scale(1.04);
 }
 
-/* 商品標籤 */
+/* 角標：內縮 14px 不貼邊 */
 .tag-badge-wrap {
-  top: 10px;
-  left: 10px;
+  top: 14px;
+  left: 14px;
   z-index: 2;
 }
 
@@ -200,14 +198,15 @@ const handleWishlistToggle = () => {
   letter-spacing: 0.06em;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
 }
 
-/* 浮動愛心按鈕 */
+/* 浮動愛心：內縮 14px 不貼邊 */
 .heart-btn {
-  top: 10px;
-  right: 10px;
-  width: 30px;
-  height: 30px;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: 1px solid rgba(0, 0, 0, 0.04);
   background-color: rgba(255, 255, 255, 0.9);
@@ -225,11 +224,12 @@ const handleWishlistToggle = () => {
 .heart-btn:hover {
   background-color: #ffffff;
   transform: scale(1.08);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
 }
 
 .heart-icon {
-  width: 14px;
-  height: 14px;
+  width: 15px;
+  height: 15px;
   color: #9c9289;
   transition: color 0.2s ease;
 }
@@ -238,7 +238,6 @@ const handleWishlistToggle = () => {
   color: #a85858;
 }
 
-/* 庫存預警標籤 */
 .stock-warning-badge {
   background: rgba(168, 88, 88, 0.88);
   backdrop-filter: blur(4px);
@@ -248,12 +247,10 @@ const handleWishlistToggle = () => {
   z-index: 2;
 }
 
-/* 2. 資訊區域：緊湊留白，大幅降低卡片高度 */
 .info-box {
   padding: 0.75rem 0.9rem 0.85rem;
 }
 
-/* 分類名稱 */
 .category-name {
   font-size: 10px;
   letter-spacing: 0.05em;
@@ -261,7 +258,6 @@ const handleWishlistToggle = () => {
   font-weight: 600;
 }
 
-/* 商品名稱：單行顯示並截斷（或最多兩行），消除過長空白 */
 .product-name {
   font-size: 0.875rem;
   font-weight: 500;
@@ -279,25 +275,21 @@ const handleWishlistToggle = () => {
   color: var(--md-primary, #9b7e68);
 }
 
-/* 價格排版 */
 .price-row {
   line-height: 1;
 }
 
-/* 折扣率 */
 .discount-rate {
   font-size: 0.9rem;
   color: #b54949;
 }
 
-/* 實付售價 */
 .sale-price {
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--md-text-primary, #2d2621);
 }
 
-/* 劃線原價 */
 .origin-price {
   font-size: 0.725rem;
 }

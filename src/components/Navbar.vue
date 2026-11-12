@@ -2,17 +2,8 @@
   <header class="navbar-wrapper sticky-top bg-white border-bottom">
     <div class="navbar-inner-container">
       
-      <!-- ==================== 1. 最左側：LOGO 與手機版漢堡按鈕 ==================== -->
+      <!-- 1. 最左側：LOGO -->
       <div class="nav-brand-section">
-        <button
-          class="btn p-0 border-0 d-lg-none text-dark me-2"
-          type="button"
-          @click="showMobileMenu = true"
-          aria-label="打開導覽選單"
-        >
-          <Menu style="width: 22px; height: 22px;" />
-        </button>
-
         <router-link to="/" class="navbar-brand d-flex align-items-center gap-2 text-decoration-none">
           <span class="fw-bold font-serif text-dark logo-text">
             MD.SELECT
@@ -23,7 +14,7 @@
         </router-link>
       </div>
 
-      <!-- ==================== 2. 中間：主分類導覽選單 (優化 Hover 與防斷空橋樑) ==================== -->
+      <!-- 2. 中間：桌機版主分類導覽選單 (點擊進入該分類專屬頁面) -->
       <nav class="nav-menu-section d-none d-lg-flex align-items-center">
         <div
           v-for="(cat, idx) in marketingStore.categoryTree"
@@ -33,11 +24,10 @@
           @mouseenter="handleMenuEnter(idx)"
           @mouseleave="handleMenuLeave"
         >
-          <!-- 選單按鈕 -->
           <button
             type="button"
             class="nav-menu-btn"
-            @click="handleCategoryClick(cat.name)"
+            @click="navigateToCategory(cat.name)"
           >
             <span>{{ cat.name }}</span>
             <ChevronDown
@@ -46,7 +36,7 @@
             />
           </button>
 
-          <!-- 下拉多欄面板 (含透明防斷空感應區，滑動不消失) -->
+          <!-- 下拉多欄面板 -->
           <transition name="dropdown-fade">
             <div
               v-show="activeMenuIndex === idx"
@@ -66,7 +56,7 @@
                       <li v-for="(item, iIdx) in sub.items" :key="iIdx">
                         <a
                           href="javascript:void(0)"
-                          @click="handleCategoryClick(item)"
+                          @click="navigateToCategory(cat.name, item)"
                           class="sub-cat-link"
                         >
                           {{ item }}
@@ -81,22 +71,22 @@
         </div>
       </nav>
 
-      <!-- ==================== 3. 最右側：修復後的搜尋欄 + 管理後台 + 會員 + 購物袋 ==================== -->
-      <div class="nav-actions-section d-flex align-items-center gap-2.5">
+      <!-- 3. 最右側：搜尋列 + 桌機操作按鈕群 -->
+      <div class="nav-actions-section d-flex align-items-center gap-2 gap-sm-2.5">
         
-        <!-- ★ 嚴格對齊防跑版的搜尋列容器 ★ -->
-        <div class="search-box-container">
-          <!-- 放大鏡圖示：絕對置中，穿透點擊 -->
+        <!-- 桌機版搜尋框 -->
+        <div class="search-box-container d-none d-md-inline-flex">
           <Search class="search-icon" />
           <input
-            :value="productStore.searchInput"
+            :value="searchInput"
             @input="onSearchInput"
+            @keyup.enter="performSearch"
             type="text"
             placeholder="搜尋正韓單品..."
             class="search-input"
           />
           <button
-            v-if="productStore.searchInput"
+            v-if="searchInput"
             @click="clearSearch"
             type="button"
             class="clear-search-btn"
@@ -106,40 +96,50 @@
           </button>
         </div>
 
-        <!-- 管理後台入口 -->
+        <!-- 手機版獨立搜尋切換圖示 -->
+        <button
+          class="btn btn-link text-dark p-1.5 d-md-none"
+          type="button"
+          @click="isMobileSearchExpanded = !isMobileSearchExpanded"
+          aria-label="切換搜尋列"
+        >
+          <Search style="width: 20px; height: 20px;" />
+        </button>
+
+        <!-- 桌機版後台入口 -->
         <router-link
           v-if="authStore.isAdmin"
           to="/admin"
-          class="btn btn-dark btn-sm rounded-pill px-2.5 py-1 d-flex align-items-center gap-1 font-monospace action-btn"
+          class="btn btn-dark btn-sm rounded-pill px-3 py-1 d-none d-lg-flex align-items-center gap-1 font-monospace action-btn"
         >
           <Settings style="width: 13px; height: 13px;" />
-          <span class="d-none d-sm-inline">管理後台</span>
+          <span>管理後台</span>
         </router-link>
 
-        <!-- 會員入口 -->
+        <!-- 桌機版會員入口 -->
         <router-link
           v-if="authStore.user?.isLoggedIn"
           to="/profile"
-          class="btn btn-light btn-sm rounded-pill px-3 py-1 text-secondary d-flex align-items-center gap-1.5 action-btn"
+          class="btn btn-light btn-sm rounded-pill px-3 py-1 text-secondary d-none d-lg-flex align-items-center gap-1.5 action-btn"
         >
-          <User style="width: 13px; height: 13px;" />
-          <span class="d-none d-md-inline">{{ authStore.user.name }}</span>
+          <User style="width: 14px; height: 14px;" />
+          <span>{{ authStore.user.name }}</span>
         </router-link>
         <button
           v-else
           @click="showAuthModal = true"
           type="button"
-          class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-1 d-flex align-items-center gap-1 action-btn"
+          class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-1 d-none d-lg-flex align-items-center gap-1 action-btn"
         >
-          <User style="width: 13px; height: 13px;" />
+          <User style="width: 14px; height: 14px;" />
           <span>登入</span>
         </button>
 
-        <!-- 購物袋按鈕 -->
+        <!-- 桌機版購物袋按鈕 -->
         <button
           @click="cartStore.toggleDrawer(true)"
           type="button"
-          class="btn btn-link text-dark position-relative p-2 cart-trigger-btn"
+          class="btn btn-link text-dark position-relative p-2 cart-trigger-btn d-none d-lg-flex"
           aria-label="購物車"
         >
           <ShoppingBag style="width: 20px; height: 20px;" />
@@ -154,7 +154,31 @@
 
     </div>
 
-    <!-- 手機版 Offcanvas 側邊抽屜選單 -->
+    <!-- 手機版下拉全寬搜尋條 -->
+    <div v-if="isMobileSearchExpanded" class="d-md-none border-top px-3 py-2 bg-light">
+      <div class="position-relative d-flex align-items-center">
+        <Search class="position-absolute start-0 ms-3 text-muted" style="width: 15px; height: 15px;" />
+        <input
+          :value="searchInput"
+          @input="onSearchInput"
+          @keyup.enter="performSearch"
+          type="text"
+          placeholder="搜尋正韓單品、商品標籤..."
+          class="form-control form-control-sm rounded-pill ps-5 font-sans"
+          autofocus
+        />
+        <button
+          v-if="searchInput"
+          @click="clearSearch"
+          type="button"
+          class="btn btn-link btn-sm text-secondary position-absolute end-0 me-2 p-0 text-decoration-none"
+        >
+          ×
+        </button>
+      </div>
+    </div>
+
+    <!-- 手機版全品類抽屜 (點擊分類跳轉到獨立分類頁) -->
     <Teleport to="body">
       <div
         v-if="showMobileMenu"
@@ -168,18 +192,8 @@
         :style="{ transform: showMobileMenu ? 'translateX(0)' : 'translateX(-100%)' }"
       >
         <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
-          <span class="fw-bold font-serif text-dark" style="letter-spacing: 0.1em;">CATEGORY</span>
+          <span class="fw-bold font-serif text-dark fs-6" style="letter-spacing: 0.1em;">ALL CATEGORIES</span>
           <button type="button" class="btn-close" @click="showMobileMenu = false"></button>
-        </div>
-
-        <div v-if="authStore.isAdmin" class="mb-3">
-          <router-link
-            to="/admin"
-            class="btn btn-dark btn-sm w-100 rounded-pill py-2 font-monospace"
-            @click="showMobileMenu = false"
-          >
-            進入管理後台
-          </router-link>
         </div>
 
         <div class="flex-grow-1 overflow-y-auto no-scrollbar">
@@ -201,13 +215,23 @@
               </h2>
               <div :id="'collapse-' + idx" class="accordion-collapse collapse" data-bs-parent="#mobileCatAccordion">
                 <div class="accordion-body px-2 py-2 bg-light rounded-3 mb-2">
+                  <div class="mb-2">
+                    <button
+                      type="button"
+                      class="btn btn-dark btn-sm rounded-pill w-100 py-1 font-monospace"
+                      style="font-size: 11px;"
+                      @click="navigateToCategory(cat.name)"
+                    >
+                      瀏覽全部 {{ cat.name }} →
+                    </button>
+                  </div>
                   <div v-for="(sub, sIdx) in cat.subcategories" :key="'ms-' + sIdx" class="mb-3">
                     <div class="fw-bold small text-muted mb-1" style="font-size: 11px;">{{ sub.name }}</div>
                     <div class="d-flex flex-wrap gap-1.5">
                       <button
                         v-for="(item, iIdx) in sub.items"
                         :key="'mi-' + iIdx"
-                        @click="handleCategoryClick(item)"
+                        @click="navigateToCategory(cat.name, item)"
                         type="button"
                         class="btn btn-sm btn-outline-secondary rounded-pill py-0.5 px-2.5"
                         style="font-size: 11px;"
@@ -230,18 +254,25 @@
 
     <!-- 登入視窗 -->
     <AuthModal :is-open="showAuthModal" @close="showAuthModal = false" />
+
+    <!-- 手機端底部導覽列 -->
+    <BottomNav
+      @open-category="showMobileMenu = true"
+      @open-auth="showAuthModal = true"
+    />
   </header>
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ShoppingBag, Search, User, Menu, Settings, ChevronDown } from 'lucide-vue-next'
+import { ShoppingBag, Search, User, Settings, ChevronDown } from 'lucide-vue-next'
 import { useProductStore } from '../stores/productStore'
 import { useCartStore } from '../stores/cartStore'
 import { useAuthStore } from '../stores/authStore'
 import { useMarketingStore } from '../stores/marketingStore'
 import AuthModal from './AuthModal.vue'
+import BottomNav from './BottomNav.vue'
 
 const productStore = useProductStore()
 const cartStore = useCartStore()
@@ -251,12 +282,12 @@ const router = useRouter()
 
 const showAuthModal = ref(false)
 const showMobileMenu = ref(false)
+const isMobileSearchExpanded = ref(false)
+const searchInput = ref('')
 
-// 記錄當前懸停的選單索引
 const activeMenuIndex = ref(null)
 let leaveTimer = null
 
-// 滑鼠移入按鈕或整個項目：清除收合計時器並立刻展開
 const handleMenuEnter = (index) => {
   if (leaveTimer) {
     clearTimeout(leaveTimer)
@@ -265,7 +296,6 @@ const handleMenuEnter = (index) => {
   activeMenuIndex.value = index
 }
 
-// 滑鼠移出項目：設定 280ms 防手震緩衝，給予足夠時間移動游標
 const handleMenuLeave = () => {
   if (leaveTimer) clearTimeout(leaveTimer)
   leaveTimer = setTimeout(() => {
@@ -274,18 +304,35 @@ const handleMenuLeave = () => {
 }
 
 const onSearchInput = (e) => {
-  productStore.setSearchQuery(e.target.value)
+  searchInput.value = e.target.value
 }
 
 const clearSearch = () => {
-  productStore.setSearchQuery('')
+  searchInput.value = ''
 }
 
-const handleCategoryClick = (keyword) => {
-  productStore.setSearchQuery(keyword)
+// 執行關鍵字搜尋：直接帶去專門分類頁
+const performSearch = () => {
+  if (searchInput.value.trim()) {
+    productStore.setSearchQuery(searchInput.value.trim())
+    router.push(`/category/${encodeURIComponent('ALL')}`)
+    isMobileSearchExpanded.value = false
+  }
+}
+
+// ★ 核心：點擊分類時跳轉至獨立頁面
+const navigateToCategory = (catName, keyword = '') => {
   activeMenuIndex.value = null
   showMobileMenu.value = false
-  router.push('/')
+  isMobileSearchExpanded.value = false
+
+  if (keyword) {
+    productStore.setSearchQuery(keyword)
+  } else {
+    productStore.setSearchQuery('')
+  }
+
+  router.push(`/category/${encodeURIComponent(catName)}`)
 }
 </script>
 
@@ -295,7 +342,6 @@ const handleCategoryClick = (keyword) => {
   background-color: #ffffff;
 }
 
-/* 核心容器：左右分散對齊 */
 .navbar-inner-container {
   display: flex;
   justify-content: space-between;
@@ -303,11 +349,10 @@ const handleCategoryClick = (keyword) => {
   width: 100%;
   max-width: 1360px;
   margin: 0 auto;
-  padding: 0.75rem clamp(1.25rem, 3vw, 2.5rem);
-  gap: 1.5rem;
+  padding: 0.75rem clamp(1rem, 2.5vw, 2.5rem);
+  gap: 1rem;
 }
 
-/* 左側品牌 */
 .nav-brand-section {
   flex-shrink: 0;
   display: flex;
@@ -325,7 +370,6 @@ const handleCategoryClick = (keyword) => {
   letter-spacing: 0.1em;
 }
 
-/* 中間選單列 */
 .nav-menu-section {
   flex: 1;
   justify-content: center;
@@ -366,7 +410,6 @@ const handleCategoryClick = (keyword) => {
   transform: rotate(180deg);
 }
 
-/* ==================== 下拉面板與 Hover Bridge 防斷空橋 ==================== */
 .dropdown-panel {
   position: absolute;
   top: 100%;
@@ -377,10 +420,9 @@ const handleCategoryClick = (keyword) => {
   z-index: 1060;
   padding: 1.75rem 2rem;
   box-shadow: 0 12px 30px rgba(45, 38, 33, 0.09);
-  margin-top: 10px; /* 與按鈕保持美觀距離 */
+  margin-top: 10px;
 }
 
-/* ★ 關鍵：透明隱形橋樑，填補按鈕與下拉面板間的 10px 空隙，滑鼠不會失焦斷線 ★ */
 .dropdown-panel::before {
   content: '';
   position: absolute;
@@ -423,7 +465,6 @@ const handleCategoryClick = (keyword) => {
   transform: translateX(2px);
 }
 
-/* ==================== 右側操作區與搜尋欄徹底防跑版 ==================== */
 .nav-actions-section {
   flex-shrink: 0;
   display: flex;
@@ -431,7 +472,6 @@ const handleCategoryClick = (keyword) => {
   white-space: nowrap;
 }
 
-/* 搜尋容器：嚴格鎖定尺寸與邊界 */
 .search-box-container {
   position: relative;
   display: inline-flex;
@@ -441,7 +481,6 @@ const handleCategoryClick = (keyword) => {
   flex-shrink: 0;
 }
 
-/* 放大鏡圖示：絕對置中，完全無跑版風險 */
 .search-icon {
   position: absolute;
   left: 12px;
@@ -450,17 +489,16 @@ const handleCategoryClick = (keyword) => {
   width: 14px;
   height: 14px;
   color: #8c827a;
-  pointer-events: none; /* 點擊直接穿透給 input */
+  pointer-events: none;
   z-index: 3;
 }
 
-/* 搜尋輸入框：強制覆蓋預設樣式，保留左側放大鏡空間 */
 .search-input {
   width: 100%;
   height: 36px;
   line-height: 36px;
   font-size: 12px;
-  padding-left: 34px !important; /* 確保文字與放大鏡保持安全距離 */
+  padding-left: 34px !important;
   padding-right: 28px !important;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
@@ -480,7 +518,6 @@ const handleCategoryClick = (keyword) => {
   box-shadow: 0 0 0 3px rgba(155, 126, 104, 0.15) !important;
 }
 
-/* 清除按鈕 */
 .clear-search-btn {
   position: absolute;
   right: 10px;
@@ -523,7 +560,6 @@ const handleCategoryClick = (keyword) => {
   top: 2px !important;
 }
 
-/* 下拉漸變微動畫 */
 .dropdown-fade-enter-active,
 .dropdown-fade-leave-active {
   transition: opacity 0.16s ease, transform 0.16s ease;
@@ -535,7 +571,6 @@ const handleCategoryClick = (keyword) => {
   transform: translate(-50%, -6px);
 }
 
-/* 手機版抽屜 */
 .mobile-drawer {
   width: 320px;
   max-width: 85vw;

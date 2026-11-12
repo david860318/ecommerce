@@ -1,133 +1,97 @@
 <template>
-  <div class="d-flex flex-column gap-4 w-100" style="min-width: 0;">
-    <!-- 頂部標題工具列 -->
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+  <div class="d-flex flex-column gap-3.5 gap-md-4 w-100" style="min-width: 0;">
+    <!-- 頂部標題與新增按鈕 -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
       <div>
-        <h1 class="h4 fw-bold text-dark font-serif mb-1">商品與即時庫存控管 (PIM & WMS)</h1>
-        <p class="small text-muted mb-0">支援多規格 SKU 生成、富文本圖文編輯、安全庫存預警與手動盤點</p>
+        <h1 class="h4 fw-bold text-dark font-serif mb-1">商品與即時庫存管理</h1>
+        <p class="small text-muted mb-0">維護全館單品、多圖相簿上傳、首頁推薦標記（熱門排行/當季新品）、SKU 規格與庫存</p>
       </div>
-
-      <div class="d-flex gap-2">
-        <button class="btn btn-primary btn-sm rounded-pill px-3.5 shadow-2xs fw-bold" @click="openCreateModal">
-          + 新增商品 (SPU/SKU)
-        </button>
-      </div>
+      <button class="btn btn-primary btn-sm rounded-pill px-3.5 fw-bold shadow-2xs" @click="openCreateProductModal">
+        + 上架新商品
+      </button>
     </div>
 
-    <!-- 批次操作工具列 (獨立卡片，內距充裕) -->
-    <div class="card-korean p-3.5 bg-white shadow-xs d-flex justify-content-between align-items-center flex-wrap gap-3">
-      <div class="d-flex align-items-center gap-2 small">
-        <input
-          type="checkbox"
-          class="form-check-input mt-0"
-          :checked="isAllSelected"
-          @change="toggleSelectAll"
-        />
-        <span class="text-secondary">已選取 <strong>{{ selectedIds.length }}</strong> 件商品</span>
-      </div>
-
-      <div class="d-flex align-items-center gap-2 flex-wrap">
-        <div class="btn-group btn-group-sm">
-          <button
-            class="btn btn-outline-success"
-            :disabled="selectedIds.length === 0"
-            @click="handleBatchStatus('ACTIVE')"
-          >
-            一鍵批次上架
-          </button>
-          <button
-            class="btn btn-outline-secondary"
-            :disabled="selectedIds.length === 0"
-            @click="handleBatchStatus('INACTIVE')"
-          >
-            一鍵批次下架
-          </button>
-        </div>
-
-        <button
-          class="btn btn-outline-dark btn-sm rounded-pill px-3"
-          :disabled="selectedIds.length === 0"
-          @click="openBatchPriceModal"
-        >
-          批次調整價格
-        </button>
-
-        <button
-          class="btn btn-outline-dark btn-sm rounded-pill px-3"
-          :disabled="selectedIds.length === 0"
-          @click="openBatchStockModal"
-        >
-          批次調整庫存
-        </button>
-      </div>
-    </div>
-
-    <!-- 商品規格清單表格 (全寬圓角自帶邊距) -->
-    <div class="card-korean bg-white shadow-xs p-0 overflow-hidden">
+    <!-- 商品管理資料表格 (RWD 滾動保護) -->
+    <div class="card-korean bg-white shadow-xs p-3.5 p-md-4 border">
       <div class="table-responsive">
-        <table class="table table-hover align-middle small mb-0">
+        <table class="table table-hover align-middle small mb-0 font-sans">
           <thead class="table-light">
             <tr class="text-secondary text-nowrap" style="font-size: 11px;">
-              <th style="width: 44px; text-align: center;"></th>
-              <th style="min-width: 250px;">商品名稱 / ID</th>
-              <th style="min-width: 110px;">分類</th>
-              <th style="min-width: 120px;">售價 / 原價</th>
-              <th style="min-width: 260px;">SKU 規格矩陣與各規格庫存</th>
-              <th style="min-width: 110px;">上架狀態</th>
-              <th class="text-end text-nowrap" style="min-width: 170px;">管理動作</th>
+              <th style="min-width: 70px;">商品縮圖</th>
+              <th style="min-width: 170px;">商品名稱 / 分類</th>
+              <th style="min-width: 100px;">基礎售價</th>
+              <th style="min-width: 150px;">首頁輪播下方推薦展示</th>
+              <th style="min-width: 150px;">規格與即時庫存 (SKUs)</th>
+              <th style="min-width: 80px;">累計銷量</th>
+              <th class="text-end text-nowrap" style="min-width: 130px;">操作</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="product in productStore.products" :key="product.id">
-              <td style="text-align: center;">
-                <input
-                  type="checkbox"
-                  class="form-check-input mt-0"
-                  :checked="selectedIds.includes(product.id)"
-                  @change="toggleSelectOne(product.id)"
-                />
-              </td>
+            <tr v-for="prod in productStore.products" :key="prod.id">
               <td>
-                <div class="d-flex align-items-center gap-3">
-                  <img :src="product.image" class="rounded object-fit-cover flex-shrink-0" style="width: 44px; height: 58px;" />
-                  <div class="min-w-0">
-                    <strong class="text-dark d-block text-truncate" style="max-width: 220px;">{{ product.name }}</strong>
-                    <span class="text-muted font-monospace" style="font-size: 10px;">ID: #{{ product.id }}</span>
-                  </div>
-                </div>
-              </td>
-              <td><span class="badge bg-light text-dark border">{{ product.category }}</span></td>
-              <td>
-                <span class="fw-bold font-monospace text-dark">NT$ {{ product.basePrice }}</span>
-                <span v-if="product.originalPrice" class="text-muted text-decoration-line-through font-monospace ms-1" style="font-size: 10px;">
-                  {{ product.originalPrice }}
-                </span>
-              </td>
-              <td>
-                <div class="d-flex flex-wrap gap-1">
-                  <span
-                    v-for="sku in product.skus"
-                    :key="sku.skuId"
-                    class="badge font-monospace py-1 px-2 border"
-                    :class="sku.stock <= 5 ? 'bg-danger-subtle text-danger border-danger-subtle' : 'bg-light text-dark'"
-                    style="font-size: 10.5px;"
-                  >
-                    {{ sku.color }}/{{ sku.size }}: {{ sku.stock }}件 (NT${{ sku.price }})
+                <div class="rounded-3 overflow-hidden border position-relative" style="width: 48px; height: 60px; background-color: #f5f2ed;">
+                  <img :src="prod.image" class="w-100 h-100 object-fit-cover" />
+                  <span v-if="(prod.images || []).length > 1" class="position-absolute bottom-0 end-0 badge bg-dark text-white font-monospace" style="font-size: 8px; padding: 2px 4px; border-radius: 3px 0 0 0;">
+                    +{{ prod.images.length }}
                   </span>
                 </div>
               </td>
               <td>
-                <span class="badge rounded-pill" :class="product.status === 'ACTIVE' ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'">
-                  {{ product.status === 'ACTIVE' ? '● 上架中' : '○ 已下架' }}
-                </span>
+                <strong class="text-dark d-block text-truncate" style="max-width: 200px;">{{ prod.name }}</strong>
+                <span class="badge bg-light text-muted border font-monospace" style="font-size: 9.5px;">{{ prod.category }}</span>
+              </td>
+              <td class="font-monospace fw-bold text-dark text-nowrap">
+                NT$ {{ prod.basePrice.toLocaleString() }}
+              </td>
+              <!-- 首頁推播標籤快速開關 -->
+              <td>
+                <div class="d-flex flex-column gap-1">
+                  <button
+                    type="button"
+                    class="btn btn-sm rounded-pill py-0.5 px-2 text-start font-monospace d-inline-flex align-items-center gap-1.5"
+                    :class="prod.isHotRanking ? 'btn-danger-subtle text-danger border border-danger-subtle' : 'btn-light text-muted border'"
+                    style="font-size: 10px; width: fit-content;"
+                    @click="toggleFeatured(prod, 'isHotRanking')"
+                    title="點擊切換是否放入首頁「熱門排行」"
+                  >
+                    <span>{{ prod.isHotRanking ? '★ 熱門排行: 開' : '☆ 熱門排行: 關' }}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    class="btn btn-sm rounded-pill py-0.5 px-2 text-start font-monospace d-inline-flex align-items-center gap-1.5"
+                    :class="prod.isSeasonalNew ? 'btn-success-subtle text-success border border-success-subtle' : 'btn-light text-muted border'"
+                    style="font-size: 10px; width: fit-content;"
+                    @click="toggleFeatured(prod, 'isSeasonalNew')"
+                    title="點擊切換是否放入首頁「當季新品」"
+                  >
+                    <span>{{ prod.isSeasonalNew ? '● 當季新品: 開' : '○ 當季新品: 關' }}</span>
+                  </button>
+                </div>
+              </td>
+              <td>
+                <div class="d-flex flex-wrap gap-1" style="max-width: 220px;">
+                  <span
+                    v-for="sku in prod.skus"
+                    :key="sku.skuId"
+                    class="badge rounded-pill font-monospace"
+                    :class="sku.stock <= 5 ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-secondary-subtle text-secondary'"
+                    style="font-size: 9px;"
+                  >
+                    {{ sku.color }}/{{ sku.size }}: {{ sku.stock }}件
+                  </span>
+                </div>
+              </td>
+              <td class="font-monospace text-muted text-nowrap">
+                {{ prod.salesCount || 0 }} 件
               </td>
               <td class="text-end text-nowrap">
                 <div class="d-flex justify-content-end gap-1.5">
-                  <button class="btn btn-outline-primary btn-sm rounded-pill px-2.5 py-1" style="font-size: 11px;" @click="openEditModal(product)">
+                  <button class="btn btn-outline-primary btn-sm rounded-pill px-2.5 py-1" style="font-size: 11px;" @click="openEditProductModal(prod)">
                     編輯
                   </button>
-                  <button class="btn btn-outline-danger btn-sm rounded-pill px-2.5 py-1" style="font-size: 11px;" @click="handleDeleteProduct(product)">
-                    刪除
+                  <button class="btn btn-outline-danger btn-sm rounded-pill px-2.5 py-1" style="font-size: 11px;" @click="handleDeleteProduct(prod)">
+                    下架
                   </button>
                 </div>
               </td>
@@ -137,200 +101,206 @@
       </div>
     </div>
 
-    <!-- 庫存異動流水 (同樣加上標準內距) -->
-    <div class="card-korean p-4 bg-white shadow-xs">
-      <h2 class="fs-6 fw-bold text-dark mb-3">庫存變動歷史流水紀錄 (WMS Logs)</h2>
-      <div class="table-responsive">
-        <table class="table table-hover align-middle small mb-0 font-monospace">
-          <thead class="table-light">
-            <tr class="text-nowrap" style="font-size: 11px;">
-              <th>單號</th>
-              <th>規格</th>
-              <th>數量變動</th>
-              <th>異動後結存</th>
-              <th>異動原因</th>
-              <th>操作者</th>
-              <th>時間</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="log in adminStore.stockLogs" :key="log.id">
-              <td class="text-muted">{{ log.id }}</td>
-              <td class="text-truncate" style="max-width: 220px;">{{ log.productName }}</td>
-              <td class="fw-bold" :class="log.changeQty > 0 ? 'text-success' : 'text-danger'">
-                {{ log.changeQty > 0 ? `+${log.changeQty}` : log.changeQty }}
-              </td>
-              <td class="fw-bold">{{ log.afterStock }} 件</td>
-              <td>{{ log.reason }}</td>
-              <td>{{ log.operator }}</td>
-              <td class="text-muted">{{ log.createdAt }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- 新增 / 編輯商品彈窗 -->
+    <!-- 彈窗：新增/編輯商品 Modal (多圖上傳與設定) -->
     <Teleport to="body">
       <div v-if="showModal" class="modal fade show d-block modal-backdrop-custom" tabindex="-1" style="z-index: 1070;">
-        <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable" style="max-width: 900px;">
-          <div class="modal-content rounded-4 border-0 p-4 shadow-xl">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable" style="max-width: 720px; margin: 0.75rem auto;">
+          <div class="modal-content rounded-4 border-0 p-3.5 p-sm-4 shadow-xl">
             <div class="modal-header border-0 pb-0">
               <h3 class="modal-title fs-5 fw-bold text-dark font-serif">
-                {{ isEditing ? '編輯商品與規格 (SPU/SKU)' : '新增韓系商品與自動規格矩陣' }}
+                {{ isEditing ? '編輯商品資料與首頁推薦' : '上架新商品' }}
               </h3>
               <button type="button" class="btn-close" @click="showModal = false"></button>
             </div>
 
-            <div class="modal-body small px-3 py-4">
+            <div class="modal-body small px-1 py-3">
               <form @submit.prevent="saveProduct" class="d-flex flex-column gap-3.5">
-                <div class="row g-2">
-                  <div class="col-8">
+                
+                <!-- 1. 基本資訊 -->
+                <div class="row g-2.5">
+                  <div class="col-12 col-sm-8">
                     <label class="form-label text-secondary mb-1">商品名稱 *</label>
-                    <input v-model="form.name" required type="text" class="form-control" placeholder="例如：法式極簡微抓皺雪紡襯衫" />
+                    <input v-model="productForm.name" required type="text" class="form-control form-control-sm" placeholder="例如：法式優雅落肩針織衫" />
                   </div>
-                  <div class="col-4">
-                    <label class="form-label text-secondary mb-1">商品分類 *</label>
-                    <select v-model="form.category" class="form-select">
-                      <option value="Top 上衣">Top 上衣</option>
-                      <option value="Outer 外套">Outer 外套</option>
-                      <option value="Bottom 下身">Bottom 下身</option>
-                      <option value="Dress 裙裝">Dress 裙裝</option>
-                    </select>
+                  <div class="col-12 col-sm-4">
+                    <label class="form-label text-secondary mb-1">品類分類 *</label>
+                    <input v-model="productForm.category" required type="text" class="form-control form-control-sm" placeholder="如：Top 上衣" />
                   </div>
                 </div>
 
-                <div class="row g-2">
-                  <div class="col-4">
+                <div class="row g-2.5">
+                  <div class="col-6">
                     <label class="form-label text-secondary mb-1">基礎售價 (NT$) *</label>
-                    <input v-model.number="form.basePrice" required type="number" min="1" class="form-control font-monospace" />
+                    <input v-model.number="productForm.basePrice" required type="number" min="0" class="form-control form-control-sm font-monospace" />
                   </div>
-                  <div class="col-4">
-                    <label class="form-label text-secondary mb-1">原價 (NT$)</label>
-                    <input v-model.number="form.originalPrice" type="number" min="1" class="form-control font-monospace" />
-                  </div>
-                  <div class="col-4">
-                    <label class="form-label text-secondary mb-1">初始狀態</label>
-                    <select v-model="form.status" class="form-select font-monospace">
-                      <option value="ACTIVE">立即上架 (ACTIVE)</option>
-                      <option value="INACTIVE">暫存下架 (INACTIVE)</option>
-                    </select>
+                  <div class="col-6">
+                    <label class="form-label text-secondary mb-1">劃線原價 (選填)</label>
+                    <input v-model.number="productForm.originalPrice" type="number" min="0" class="form-control form-control-sm font-monospace" />
                   </div>
                 </div>
 
-                <div>
-                  <label class="form-label text-secondary mb-1">商品主圖網址</label>
-                  <input v-model="form.image" type="url" class="form-control font-monospace" placeholder="https://..." />
+                <!-- 2. 首頁輪播下方推薦專區設定 -->
+                <div class="card-korean p-3 bg-light border">
+                  <label class="form-label fw-bold text-dark mb-1.5">首頁輪播下方推薦專區設定</label>
+                  <div class="row g-2 align-items-center">
+                    <div class="col-12 col-sm-5">
+                      <div class="form-check">
+                        <input v-model="productForm.isHotRanking" class="form-check-input" type="checkbox" id="checkHot" />
+                        <label class="form-check-label text-dark fw-medium" for="checkHot">
+                          放入「熱門排行」推薦
+                        </label>
+                      </div>
+                    </div>
+                    <div class="col-12 col-sm-5">
+                      <div class="form-check">
+                        <input v-model="productForm.isSeasonalNew" class="form-check-input" type="checkbox" id="checkNew" />
+                        <label class="form-check-label text-dark fw-medium" for="checkNew">
+                          放入「當季新品」推薦
+                        </label>
+                      </div>
+                    </div>
+                    <div class="col-12 col-sm-2">
+                      <input v-model.number="productForm.featuredOrder" type="number" min="1" class="form-control form-control-sm font-monospace" title="排序越小越前面" placeholder="順序" />
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <label class="form-label text-secondary mb-1">商品圖文描述 (HTML)</label>
-                  <textarea
-                    v-model="form.descriptionHtml"
-                    rows="3"
-                    class="form-control font-monospace"
-                    placeholder="<p>請輸入商品描述 HTML 碼...</p>"
-                  ></textarea>
-                </div>
-
-                <!-- 規格笛卡兒積生成 -->
+                <!-- 3. ★ 多圖本機上傳與相簿管理專區 ★ -->
                 <div class="border rounded-3 p-3 bg-light">
+                  <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                    <div>
+                      <strong class="text-dark">商品多圖相簿（第一張自動作為主封面圖）*</strong>
+                      <div class="text-muted font-monospace" style="font-size: 10.5px;">
+                        支援由手機/電腦選取多張圖批次上傳，點擊「設為主圖」可隨時調整封面
+                      </div>
+                    </div>
+                    <span class="badge rounded-pill bg-secondary font-monospace" style="font-size: 10px;">
+                      已加入 {{ productForm.images.length }} 張圖片
+                    </span>
+                  </div>
+
+                  <!-- 本機多圖選取按鈕與輸入框 -->
+                  <div class="d-flex flex-column gap-2 mb-3 bg-white p-2.5 rounded-2 border">
+                    <div>
+                      <label class="form-label text-secondary mb-1 fw-semibold">從電腦/手機選取照片上傳（可複選多張）：</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        class="form-control form-control-sm"
+                        @change="handleMultipleImageUpload"
+                      />
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-2 pt-1 border-top">
+                      <input
+                        v-model="customUrlInput"
+                        type="url"
+                        class="form-control form-control-sm font-monospace"
+                        placeholder="或輸入外部圖片網址 (URL)..."
+                      />
+                      <button
+                        type="button"
+                        class="btn btn-outline-secondary btn-sm text-nowrap rounded-pill px-3"
+                        @click="addUrlToImages"
+                      >
+                        + 加入網址
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- 縮圖排列預覽網格 -->
+                  <div v-if="productForm.images.length > 0" class="row g-2.5">
+                    <div
+                      v-for="(imgSrc, imgIdx) in productForm.images"
+                      :key="imgIdx"
+                      class="col-6 col-sm-4 col-md-3"
+                    >
+                      <div class="gallery-thumb-item rounded-3 overflow-hidden border bg-white p-1 position-relative shadow-2xs">
+                        <div class="ratio ratio-1x1 rounded-2 overflow-hidden bg-light mb-1.5">
+                          <img :src="imgSrc" class="object-fit-cover w-100 h-100" />
+                        </div>
+                        
+                        <!-- 主圖（Cover）標章 -->
+                        <span
+                          v-if="imgIdx === 0"
+                          class="position-absolute top-0 start-0 m-2 badge bg-primary text-white font-monospace"
+                          style="font-size: 9px;"
+                        >
+                          ★ 主封面
+                        </span>
+
+                        <!-- 操作按鈕：設為主圖 / 刪除 -->
+                        <div class="d-flex justify-content-between align-items-center gap-1">
+                          <button
+                            v-if="imgIdx !== 0"
+                            type="button"
+                            class="btn btn-light btn-sm p-0 px-1.5 text-secondary border rounded-pill"
+                            style="font-size: 10px;"
+                            @click="setAsMainImage(imgIdx)"
+                            title="設定為列表主圖"
+                          >
+                            設為主圖
+                          </button>
+                          <span v-else class="text-success font-monospace" style="font-size: 10px; padding-left: 2px;">
+                            ✓ 列表封面
+                          </span>
+
+                          <button
+                            type="button"
+                            class="btn btn-link btn-sm text-danger p-0 text-decoration-none ms-auto"
+                            style="font-size: 11px;"
+                            @click="removeImage(imgIdx)"
+                            title="刪除這張圖片"
+                          >
+                            刪除
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else class="text-center py-3 text-danger small">
+                    尚未上傳任何商品圖片，請至少選擇或輸入一張圖片！
+                  </div>
+                </div>
+
+                <!-- 4. 商品簡介描述 -->
+                <div>
+                  <label class="form-label text-secondary mb-1">商品簡介描述</label>
+                  <textarea v-model="productForm.description" rows="2" class="form-control form-control-sm" placeholder="請輸入商品材質、產地與穿搭版型描述"></textarea>
+                </div>
+
+                <!-- 5. 規格庫存表格 -->
+                <div class="border rounded-3 p-2.5 p-sm-3 bg-light">
                   <div class="d-flex justify-content-between align-items-center mb-2">
-                    <strong class="text-dark">多規格自動生成 SKU 矩陣</strong>
-                    <button type="button" class="btn btn-primary btn-sm rounded-pill py-0.5 px-3 font-monospace" style="font-size: 11px;" @click="generateCartesianSkus">
-                      ⚡ 自動展開 SKU
+                    <strong class="text-dark">SKU 規格與庫存矩陣</strong>
+                    <button type="button" class="btn btn-outline-primary btn-sm rounded-pill py-0.5 px-2.5 font-monospace" style="font-size: 11px;" @click="addSkuRow">
+                      + 增加規格
                     </button>
                   </div>
 
-                  <div class="row g-2 mb-3">
-                    <div class="col-6">
-                      <label class="form-label text-muted mb-0" style="font-size: 11px;">顏色（逗號隔開）：</label>
-                      <input v-model="specInput.colors" type="text" class="form-control form-control-sm" placeholder="奶油杏, 淺燕麥" />
+                  <div class="d-flex flex-column gap-2">
+                    <div v-for="(sku, sIdx) in productForm.skus" :key="sIdx" class="d-flex align-items-center gap-2 flex-wrap bg-white p-2 rounded-2 border">
+                      <div style="flex: 1; min-width: 80px;">
+                        <input v-model="sku.color" required type="text" class="form-control form-control-sm" placeholder="顏色 (如: 杏色)" />
+                      </div>
+                      <div style="flex: 1; min-width: 60px;">
+                        <input v-model="sku.size" required type="text" class="form-control form-control-sm" placeholder="尺寸 (如: F)" />
+                      </div>
+                      <div style="flex: 1; min-width: 80px;">
+                        <input v-model.number="sku.stock" required type="number" min="0" class="form-control form-control-sm font-monospace" placeholder="庫存件數" />
+                      </div>
+                      <button type="button" class="btn btn-link btn-sm text-danger p-0" @click="productForm.skus.splice(sIdx, 1)">×</button>
                     </div>
-                    <div class="col-6">
-                      <label class="form-label text-muted mb-0" style="font-size: 11px;">尺寸（逗號隔開）：</label>
-                      <input v-model="specInput.sizes" type="text" class="form-control form-control-sm" placeholder="S, M, FREE" />
-                    </div>
-                  </div>
-
-                  <div class="table-responsive">
-                    <table class="table table-sm table-bordered bg-white align-middle mb-0 font-monospace" style="font-size: 11.5px;">
-                      <thead class="table-light">
-                        <tr>
-                          <th>SKU 代碼</th>
-                          <th>顏色</th>
-                          <th>尺寸</th>
-                          <th>規格售價</th>
-                          <th>庫存</th>
-                          <th style="width: 44px; text-align: center;">操作</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr v-for="(sku, sIdx) in form.skus" :key="sIdx">
-                          <td><input v-model="sku.skuId" class="form-control form-control-sm p-1 font-monospace" /></td>
-                          <td><input v-model="sku.color" class="form-control form-control-sm p-1" /></td>
-                          <td><input v-model="sku.size" class="form-control form-control-sm p-1" /></td>
-                          <td><input v-model.number="sku.price" type="number" class="form-control form-control-sm p-1 font-monospace" /></td>
-                          <td><input v-model.number="sku.stock" type="number" min="0" class="form-control form-control-sm p-1 font-monospace" /></td>
-                          <td class="text-center">
-                            <button type="button" class="btn btn-link btn-sm text-danger p-0" @click="form.skus.splice(sIdx, 1)">×</button>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
                   </div>
                 </div>
 
-                <div class="pt-3">
+                <div class="pt-2">
                   <button type="submit" class="btn btn-primary w-100 rounded-pill py-2.5 fw-bold">
-                    {{ isEditing ? '儲存修改' : '確認建立商品' }}
+                    {{ isEditing ? '儲存商品與推薦設定' : '確認上架商品' }}
                   </button>
                 </div>
               </form>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Teleport>
-
-    <!-- 批次調價 Modal -->
-    <Teleport to="body">
-      <div v-if="showBatchPriceModal" class="modal fade show d-block modal-backdrop-custom" tabindex="-1" style="z-index: 1075;">
-        <div class="modal-dialog modal-dialog-centered" style="max-width: 380px;">
-          <div class="modal-content rounded-4 border-0 p-4 shadow-xl">
-            <h3 class="fs-6 fw-bold mb-3">批次調整商品售價 (已選 {{ selectedIds.length }} 件)</h3>
-            <div class="mb-3">
-              <select v-model="batchPriceForm.mode" class="form-select form-select-sm mb-2">
-                <option value="PERCENT">按折數調整（例如：90 代表 9 折）</option>
-                <option value="FIXED">固定增減金額（例如：-100 代表減 100）</option>
-              </select>
-              <input v-model.number="batchPriceForm.value" type="number" class="form-control form-control-sm font-monospace" placeholder="輸入數值" />
-            </div>
-            <div class="d-flex gap-2">
-              <button class="btn btn-light btn-sm w-50 rounded-pill border" @click="showBatchPriceModal = false">取消</button>
-              <button class="btn btn-primary btn-sm w-50 rounded-pill fw-bold" @click="executeBatchPrice">確認調價</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Teleport>
-
-    <!-- 批次調庫存 Modal -->
-    <Teleport to="body">
-      <div v-if="showBatchStockModal" class="modal fade show d-block modal-backdrop-custom" tabindex="-1" style="z-index: 1075;">
-        <div class="modal-dialog modal-dialog-centered" style="max-width: 380px;">
-          <div class="modal-content rounded-4 border-0 p-4 shadow-xl">
-            <h3 class="fs-6 fw-bold mb-3">批次調整規格庫存 (已選 {{ selectedIds.length }} 件)</h3>
-            <div class="mb-3">
-              <select v-model="batchStockForm.mode" class="form-select form-select-sm mb-2">
-                <option value="ADD">在現有基礎上增減（如: +10 或 -5）</option>
-                <option value="SET">統一設定為固定值（如: 全部重設為 20）</option>
-              </select>
-              <input v-model.number="batchStockForm.value" type="number" class="form-control form-control-sm font-monospace" placeholder="輸入數量" />
-            </div>
-            <div class="d-flex gap-2">
-              <button class="btn btn-light btn-sm w-50 rounded-pill border" @click="showBatchStockModal = false">取消</button>
-              <button class="btn btn-primary btn-sm w-50 rounded-pill fw-bold" @click="executeBatchStock">確認調整</button>
             </div>
           </div>
         </div>
@@ -340,144 +310,187 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive } from 'vue'
 import { useProductStore } from '../../stores/productStore'
 import { useAdminStore } from '../../stores/adminStore'
 
 const productStore = useProductStore()
 const adminStore = useAdminStore()
 
-const selectedIds = ref([])
-const isAllSelected = computed(() => {
-  return productStore.products.length > 0 && selectedIds.value.length === productStore.products.length
-})
-
-const toggleSelectAll = (e) => {
-  if (e.target.checked) selectedIds.value = productStore.products.map(p => p.id)
-  else selectedIds.value = []
-}
-
-const toggleSelectOne = (id) => {
-  const idx = selectedIds.value.indexOf(id)
-  if (idx > -1) selectedIds.value.splice(idx, 1)
-  else selectedIds.value.push(id)
-}
-
 const showModal = ref(false)
 const isEditing = ref(false)
 const currentEditId = ref(null)
+const customUrlInput = ref('')
 
-const form = reactive({
+const productForm = reactive({
   name: '',
   category: 'Top 上衣',
-  basePrice: 1280,
-  originalPrice: 1580,
-  status: 'ACTIVE',
+  basePrice: 1000,
+  originalPrice: 1200,
   image: '',
-  descriptionHtml: '',
+  images: [],
+  description: '',
+  isHotRanking: true,
+  isSeasonalNew: false,
+  featuredOrder: 1,
   skus: []
 })
 
-const specInput = reactive({
-  colors: '奶油杏, 淺燕麥',
-  sizes: 'S, M, FREE'
-})
+// 多圖本機檔案批次上傳處理
+const handleMultipleImageUpload = (e) => {
+  const files = Array.from(e.target.files || [])
+  if (files.length === 0) return
 
-const generateCartesianSkus = () => {
-  const colors = specInput.colors.split(/[,，\s]+/).map(s => s.trim()).filter(Boolean)
-  const sizes = specInput.sizes.split(/[,，\s]+/).map(s => s.trim()).filter(Boolean)
-  if (colors.length === 0 || sizes.length === 0) {
-    alert('請至少填寫一個顏色與一個尺寸！')
-    return
-  }
-  const generated = []
-  colors.forEach(c => {
-    sizes.forEach(s => {
-      generated.push({
-        skuId: `SKU-${Date.now().toString().slice(-4)}-${c}-${s}`,
-        color: c,
-        size: s,
-        price: form.basePrice,
-        stock: 15
-      })
-    })
+  files.forEach((file) => {
+    if (!file.type.startsWith('image/')) return
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const base64Url = event.target.result
+      productForm.images.push(base64Url)
+      // 若尚未有主圖，自動將第一張設為主圖
+      if (!productForm.image) {
+        productForm.image = base64Url
+      }
+    }
+    reader.readAsDataURL(file)
   })
-  form.skus = generated
+
+  // 重置 input 以便重複選擇同檔名檔案
+  e.target.value = ''
 }
 
-const openCreateModal = () => {
+// 支援加入網址圖片
+const addUrlToImages = () => {
+  if (!customUrlInput.value.trim()) return
+  productForm.images.push(customUrlInput.value.trim())
+  if (!productForm.image) {
+    productForm.image = customUrlInput.value.trim()
+  }
+  customUrlInput.value = ''
+}
+
+// 將指定索引設為主圖（移到最前）
+const setAsMainImage = (index) => {
+  const selected = productForm.images.splice(index, 1)[0]
+  productForm.images.unshift(selected)
+  productForm.image = selected
+}
+
+// 移除單張圖片
+const removeImage = (index) => {
+  productForm.images.splice(index, 1)
+  productForm.image = productForm.images[0] || ''
+}
+
+const openCreateProductModal = () => {
   isEditing.value = false
   currentEditId.value = null
-  form.name = ''
-  form.category = 'Top 上衣'
-  form.basePrice = 1280
-  form.originalPrice = 1580
-  form.status = 'ACTIVE'
-  form.image = 'https://images.unsplash.com/photo-1598554747436-c9293d6a588f?auto=format&fit=crop&w=800&q=80'
-  form.descriptionHtml = '<p>正韓高質感設計單品，剪裁俐落垂墜。</p>'
-  form.skus = [
-    { skuId: 'SKU-01', color: '奶油杏', size: 'FREE', price: 1280, stock: 20 },
-    { skuId: 'SKU-02', color: '淺燕麥', size: 'FREE', price: 1280, stock: 15 }
+  customUrlInput.value = ''
+  productForm.name = ''
+  productForm.category = 'Top 上衣'
+  productForm.basePrice = 1280
+  productForm.originalPrice = 1580
+  productForm.image = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=800&q=80'
+  productForm.images = [
+    'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=800&q=80',
+    'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=800&q=80'
+  ]
+  productForm.description = '首爾東大門嚴選，親膚柔軟羊毛混紡，休閒與正式兼具。'
+  productForm.isHotRanking = true
+  productForm.isSeasonalNew = true
+  productForm.featuredOrder = productStore.products.length + 1
+  productForm.skus = [
+    { skuId: 'SKU-' + Date.now(), color: '奶油杏', size: 'F', stock: 15, price: 1280 }
   ]
   showModal.value = true
 }
 
-const openEditModal = (p) => {
+const openEditProductModal = (prod) => {
   isEditing.value = true
-  currentEditId.value = p.id
-  form.name = p.name
-  form.category = p.category
-  form.basePrice = p.basePrice
-  form.originalPrice = p.originalPrice
-  form.status = p.status
-  form.image = p.image
-  form.descriptionHtml = p.descriptionHtml || `<p>${p.description}</p>`
-  form.skus = JSON.parse(JSON.stringify(p.skus))
+  currentEditId.value = prod.id
+  customUrlInput.value = ''
+  productForm.name = prod.name
+  productForm.category = prod.category
+  productForm.basePrice = prod.basePrice
+  productForm.originalPrice = prod.originalPrice || 0
+  productForm.image = prod.image
+  // 若原本只有單圖，包裝為陣列
+  productForm.images = prod.images && prod.images.length > 0 ? [...prod.images] : (prod.image ? [prod.image] : [])
+  productForm.description = prod.description || ''
+  productForm.isHotRanking = Boolean(prod.isHotRanking)
+  productForm.isSeasonalNew = Boolean(prod.isSeasonalNew)
+  productForm.featuredOrder = prod.featuredOrder || 1
+  productForm.skus = JSON.parse(JSON.stringify(prod.skus || []))
   showModal.value = true
 }
 
+const toggleFeatured = (prod, field) => {
+  productStore.toggleProductFeatured(prod.id, field)
+  const label = field === 'isHotRanking' ? '熱門排行' : '當季新品'
+  adminStore.addAuditLog('切換首頁精選商品', `商品【${prod.name}】首頁【${label}】狀態已調整`)
+}
+
+const addSkuRow = () => {
+  productForm.skus.push({
+    skuId: 'SKU-' + Date.now() + Math.floor(Math.random() * 100),
+    color: '曜石黑',
+    size: 'F',
+    stock: 10,
+    price: productForm.basePrice
+  })
+}
+
 const saveProduct = () => {
-  if (form.skus.length === 0) {
-    alert('請至少生成一組規格！')
+  if (productForm.images.length === 0) {
+    alert('請至少上傳或新增一張商品圖片！')
     return
   }
+
+  // 確保主圖等於第一張圖
+  productForm.image = productForm.images[0]
+
   if (isEditing.value && currentEditId.value) {
-    productStore.updateProduct(currentEditId.value, form)
-    alert('商品修改已儲存！')
+    const idx = productStore.products.findIndex(p => p.id === currentEditId.value)
+    if (idx !== -1) {
+      productStore.products[idx] = {
+        ...productStore.products[idx],
+        ...productForm
+      }
+      adminStore.addAuditLog('修改商品資料', `更新商品 ID #${currentEditId.value}【${productForm.name}】，共 ${productForm.images.length} 張圖片`)
+      alert('商品資料與圖片已儲存！')
+    }
   } else {
-    productStore.addNewProduct(form)
-    alert('商品已成功新增！')
+    const nextId = Math.max(0, ...productStore.products.map(p => p.id)) + 1
+    const newProduct = {
+      id: nextId,
+      ...productForm,
+      salesCount: 0
+    }
+    productStore.products.unshift(newProduct)
+    adminStore.addAuditLog('上架新商品', `成功上架【${newProduct.name}】，共 ${newProduct.images.length} 張圖片`)
+    alert('新商品已成功發布上架！')
   }
   showModal.value = false
 }
 
-const handleDeleteProduct = (p) => {
-  if (confirm(`確定刪除商品【${p.name}】嗎？`)) {
-    productStore.deleteProduct(p.id)
-    alert('已成功刪除！')
+const handleDeleteProduct = (prod) => {
+  if (confirm(`確定要下架商品【${prod.name}】嗎？`)) {
+    const idx = productStore.products.findIndex(p => p.id === prod.id)
+    if (idx !== -1) {
+      productStore.products.splice(idx, 1)
+      adminStore.addAuditLog('下架商品', `下架商品 ID #${prod.id}【${prod.name}】`)
+      alert('商品已下架！')
+    }
   }
 }
-
-const handleBatchStatus = (targetStatus) => {
-  const res = productStore.batchToggleStatus(selectedIds.value, targetStatus)
-  alert(`已完成 ${res.count} 件商品上下架狀態更新！`)
-}
-
-const showBatchPriceModal = ref(false)
-const batchPriceForm = reactive({ mode: 'PERCENT', value: 90 })
-const openBatchPriceModal = () => { showBatchPriceModal.value = true }
-const executeBatchPrice = () => {
-  const res = productStore.batchAdjustPrice(selectedIds.value, batchPriceForm.mode, batchPriceForm.value)
-  alert(`已調整 ${res.count} 件商品價格！`)
-  showBatchPriceModal.value = false
-}
-
-const showBatchStockModal = ref(false)
-const batchStockForm = reactive({ mode: 'ADD', value: 10 })
-const openBatchStockModal = () => { showBatchStockModal.value = true }
-const executeBatchStock = () => {
-  const res = productStore.batchAdjustStock(selectedIds.value, batchStockForm.mode, batchStockForm.value)
-  alert(`已完成 ${res.count} 組 SKU 庫存調整！`)
-  showBatchStockModal.value = false
-}
 </script>
+
+<style scoped>
+.gallery-thumb-item {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.gallery-thumb-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+</style>

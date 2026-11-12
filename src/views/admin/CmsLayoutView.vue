@@ -1,19 +1,18 @@
 <template>
   <div class="d-flex flex-column gap-4 w-100" style="min-width: 0;">
-    <!-- ==================== 頂部標題說明列 (純淨標題，無按鈕干擾) ==================== -->
+    <!-- 頂部標題說明列 -->
     <div>
       <h1 class="h4 fw-bold text-dark font-serif mb-1">首頁排版與導覽選單 CMS</h1>
       <p class="small text-muted mb-0">即時維護前台 Navbar 主選單樹狀分類、頂部主輪播圖文與區塊可見度</p>
     </div>
 
-    <!-- ==================== 1. 主分類導覽選單管理 (按鈕位於右上角) ==================== -->
+    <!-- ==================== 1. 主分類導覽選單管理 ==================== -->
     <div class="card-korean bg-white shadow-xs p-4">
       <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <div>
           <h2 class="fs-6 fw-bold text-dark mb-0">前台導覽列主分類選單 (Navbar Mega Menu)</h2>
           <span class="small text-muted font-monospace" style="font-size: 11px;">控制前台導覽列中間顯示的主選單及其下拉面板分類項目</span>
         </div>
-        <!-- ★ 右上角：新增導覽主分類按鈕 ★ -->
         <button class="btn btn-outline-dark btn-sm rounded-pill px-3 shadow-2xs fw-bold" @click="openCreateCatModal">
           + 新增導覽主分類
         </button>
@@ -94,14 +93,13 @@
       </div>
     </div>
 
-    <!-- ==================== 2. 主輪播 Banner 視覺管理表格 (按鈕位於右上角) ==================== -->
+    <!-- ==================== 2. 主輪播 Banner 視覺管理表格 ==================== -->
     <div class="card-korean bg-white shadow-xs p-4">
       <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <div>
           <h2 class="fs-6 fw-bold text-dark mb-0">首頁主輪播清單 (共 {{ marketingStore.banners.length }} 組)</h2>
-          <span class="small text-muted font-monospace" style="font-size: 11px;">支援即時開關與圖文編輯</span>
+          <span class="small text-muted font-monospace" style="font-size: 11px;">支援即時開關、本機圖檔上傳與精準連結跳轉</span>
         </div>
-        <!-- ★ 右上角：新增輪播 Banner 按鈕 ★ -->
         <button class="btn btn-primary btn-sm rounded-pill px-3.5 shadow-2xs fw-bold" @click="openCreateBannerModal">
           + 新增輪播 Banner
         </button>
@@ -114,7 +112,7 @@
               <th style="width: 70px;">排序</th>
               <th style="min-width: 140px;">預覽圖</th>
               <th style="min-width: 240px;">標題與標籤文案</th>
-              <th style="min-width: 130px;">按鈕與跳轉路徑</th>
+              <th style="min-width: 160px;">按鈕與跳轉目的地</th>
               <th style="min-width: 100px;">狀態</th>
               <th class="text-end text-nowrap" style="min-width: 140px;">動作</th>
             </tr>
@@ -123,7 +121,7 @@
             <tr v-for="banner in sortedBanners" :key="banner.id">
               <td class="font-monospace fw-bold text-muted">#{{ banner.sortOrder }}</td>
               <td>
-                <div class="rounded-3 overflow-hidden border shadow-2xs" style="width: 110px; aspect-ratio: 16/9; background-color: #f5f2ed;">
+                <div class="rounded-3 overflow-hidden border shadow-2xs" style="width: 120px; aspect-ratio: 16/9; background-color: #f5f2ed;">
                   <img :src="banner.image" class="w-100 h-100 object-fit-cover" />
                 </div>
               </td>
@@ -134,9 +132,22 @@
               </td>
               <td>
                 <div class="fw-semibold text-dark">{{ banner.buttonText }}</div>
-                <span class="text-muted font-monospace" style="font-size: 10.5px;">
-                  {{ banner.linkType === 'category' ? `[品類] ${banner.linkUrl}` : banner.linkUrl }}
-                </span>
+                <div class="mt-0.5">
+                  <span
+                    class="badge rounded-pill font-monospace"
+                    :class="{
+                      'bg-primary-subtle text-primary': banner.linkType === 'category',
+                      'bg-secondary-subtle text-secondary': banner.linkType === 'path',
+                      'bg-info-subtle text-info': banner.linkType === 'external'
+                    }"
+                    style="font-size: 9.5px;"
+                  >
+                    {{ banner.linkType === 'category' ? '切換分類' : banner.linkType === 'external' ? '外部分頁' : '內部頁面' }}
+                  </span>
+                  <span class="text-muted font-monospace ms-1 small" style="font-size: 11px;">
+                    {{ banner.linkUrl }}
+                  </span>
+                </div>
               </td>
               <td>
                 <button
@@ -199,7 +210,7 @@
     <!-- ==================== 彈窗 1：主分類選單新增 / 編輯 Modal ==================== -->
     <Teleport to="body">
       <div v-if="showCatModal" class="modal fade show d-block modal-backdrop-custom" tabindex="-1" style="z-index: 1070;">
-        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable" style="max-width: 680px;">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable" style="max-width: 680px; margin: 0.75rem auto;">
           <div class="modal-content rounded-4 border-0 p-4 shadow-xl">
             <div class="modal-header border-0 pb-0">
               <h3 class="modal-title fs-5 fw-bold text-dark font-serif">
@@ -208,9 +219,8 @@
               <button type="button" class="btn-close" @click="showCatModal = false"></button>
             </div>
 
-            <div class="modal-body small px-2 py-3">
+            <div class="modal-body small px-1 py-3">
               <form @submit.prevent="saveCategory" class="d-flex flex-column gap-3.5">
-                <!-- 一級分類名稱 -->
                 <div>
                   <label class="form-label text-secondary mb-1">主分類名稱 (Navbar 顯示名稱) *</label>
                   <input
@@ -218,11 +228,10 @@
                     required
                     type="text"
                     class="form-control form-control-sm"
-                    placeholder="例如：Top 上衣、Shoes 鞋款、Accessories 配件"
+                    placeholder="例如：Top 上衣、Outer 外套、Bottom 下身"
                   />
                 </div>
 
-                <!-- 二級子分類與單品標籤 -->
                 <div class="border rounded-3 p-3 bg-light">
                   <div class="d-flex justify-content-between align-items-center mb-2.5">
                     <strong class="text-dark">下拉子分類群組 (Subcategories)</strong>
@@ -259,12 +268,12 @@
                       </div>
 
                       <div class="row g-2">
-                        <div class="col-4">
+                        <div class="col-12 col-sm-4">
                           <label class="form-label text-muted mb-0" style="font-size: 10.5px;">群組名稱 *</label>
                           <input v-model="sub.name" required type="text" class="form-control form-control-sm" placeholder="如：質感襯衫" />
                         </div>
-                        <div class="col-8">
-                          <label class="form-label text-muted mb-0" style="font-size: 10.5px;">單品關鍵字 (以逗號隔開) *</label>
+                        <div class="col-12 col-sm-8">
+                          <label class="form-label text-muted mb-0" style="font-size: 10.5px;">單品關鍵字 (逗號隔開) *</label>
                           <input
                             :value="sub.itemsString"
                             @input="sub.itemsString = $event.target.value"
@@ -291,11 +300,11 @@
       </div>
     </Teleport>
 
-    <!-- ==================== 彈窗 2：Banner 編輯 / 新增 Modal ==================== -->
+    <!-- ==================== 彈窗 2：主輪播 Banner 編輯 / 新增 Modal (支援本機上傳與動態連結) ==================== -->
     <Teleport to="body">
       <div v-if="showModal" class="modal fade show d-block modal-backdrop-custom" tabindex="-1" style="z-index: 1070;">
-        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable" style="max-width: 680px;">
-          <div class="modal-content rounded-4 border-0 p-4 shadow-xl">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable" style="max-width: 680px; margin: 0.75rem auto;">
+          <div class="modal-content rounded-4 border-0 p-3.5 p-sm-4 shadow-xl">
             <div class="modal-header border-0 pb-0">
               <h3 class="modal-title fs-5 fw-bold text-dark font-serif">
                 {{ isEditing ? '編輯主輪播圖文 (Banner)' : '新增首頁主輪播圖文' }}
@@ -303,39 +312,87 @@
               <button type="button" class="btn-close" @click="showModal = false"></button>
             </div>
 
-            <div class="modal-body small px-2 py-3">
-              <form @submit.prevent="saveBanner" class="d-flex flex-column gap-3">
-                <div>
-                  <label class="form-label text-secondary mb-1">輪播背景圖網址 *</label>
-                  <div class="d-flex gap-3 align-items-center mb-2">
-                    <div class="rounded-3 border overflow-hidden bg-light flex-shrink-0" style="width: 140px; aspect-ratio: 16/9;">
-                      <img v-if="bannerForm.image" :src="bannerForm.image" class="w-100 h-100 object-fit-cover" />
-                      <div v-else class="w-100 h-100 d-flex align-items-center justify-content-center text-muted" style="font-size: 10px;">尚未輸入網址</div>
+            <div class="modal-body small px-1 py-3">
+              <form @submit.prevent="saveBanner" class="d-flex flex-column gap-3.5">
+                
+                <!-- 1. 背景圖設定 (支援本機檔案上傳 + 外連網址切換) -->
+                <div class="border rounded-3 p-3 bg-light">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="form-label fw-bold text-dark mb-0">輪播背景圖 *</label>
+                    <!-- 上傳模式切換按鈕 -->
+                    <div class="btn-group btn-group-sm">
+                      <button
+                        type="button"
+                        class="btn"
+                        :class="imageSourceMode === 'upload' ? 'btn-primary' : 'btn-outline-secondary'"
+                        @click="imageSourceMode = 'upload'"
+                      >
+                        本機檔案上傳
+                      </button>
+                      <button
+                        type="button"
+                        class="btn"
+                        :class="imageSourceMode === 'url' ? 'btn-primary' : 'btn-outline-secondary'"
+                        @click="imageSourceMode = 'url'"
+                      >
+                        輸入圖片網址
+                      </button>
                     </div>
+                  </div>
+
+                  <div class="d-flex flex-column flex-sm-row gap-3 align-items-sm-center">
+                    <!-- 即時縮圖預覽 -->
+                    <div class="rounded-3 border overflow-hidden bg-white flex-shrink-0 shadow-2xs position-relative" style="width: 150px; aspect-ratio: 16/9;">
+                      <img v-if="bannerForm.image" :src="bannerForm.image" class="w-100 h-100 object-fit-cover" alt="Banner 預覽" />
+                      <div v-else class="w-100 h-100 d-flex align-items-center justify-content-center text-muted" style="font-size: 11px;">
+                        尚未選擇圖片
+                      </div>
+                    </div>
+
+                    <!-- 操作輸入區域 -->
                     <div class="flex-grow-1">
-                      <input
-                        v-model="bannerForm.image"
-                        required
-                        type="url"
-                        class="form-control form-control-sm font-monospace mb-1"
-                        placeholder="https://images.unsplash.com/..."
-                      />
-                      <span class="text-muted font-monospace" style="font-size: 10.5px;">建議使用 16:9 或 16:7 比例照片</span>
+                      <!-- 模式 A：本機檔案上傳 -->
+                      <div v-if="imageSourceMode === 'upload'">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          class="form-control form-control-sm mb-1.5"
+                          @change="handleImageFileUpload"
+                        />
+                        <div class="text-muted font-monospace" style="font-size: 10.5px;">
+                          點擊按鈕直接從電腦或手機相簿挑選相片（支援 JPG, PNG, WebP）
+                        </div>
+                      </div>
+
+                      <!-- 模式 B：網路 URL 輸入 -->
+                      <div v-else>
+                        <input
+                          v-model="bannerForm.image"
+                          type="url"
+                          class="form-control form-control-sm font-monospace mb-1.5"
+                          placeholder="https://images.unsplash.com/photo-..."
+                        />
+                        <div class="text-muted font-monospace" style="font-size: 10.5px;">
+                          建議使用 16:9 橫向高清照片（寬度 1600px 以上佳）
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div class="row g-2">
+                <!-- 2. 膠囊標籤與播放順序 -->
+                <div class="row g-2.5">
                   <div class="col-8">
-                    <label class="form-label text-secondary mb-1">膠囊標籤文字 (Tag) *</label>
+                    <label class="form-label text-secondary mb-1">膠囊標籤 (Badge Tag) *</label>
                     <input v-model="bannerForm.tag" required type="text" class="form-control form-control-sm font-monospace" placeholder="例如：SEASON OFF · 2026 WINTER" />
                   </div>
                   <div class="col-4">
-                    <label class="form-label text-secondary mb-1">播放排序</label>
+                    <label class="form-label text-secondary mb-1">播放順序 (Sort)</label>
                     <input v-model.number="bannerForm.sortOrder" type="number" min="1" class="form-control form-control-sm font-monospace" />
                   </div>
                 </div>
 
+                <!-- 3. 主標題 (支援換行排版) -->
                 <div>
                   <label class="form-label text-secondary mb-1">主標題 (支援換行排版) *</label>
                   <textarea
@@ -347,39 +404,97 @@
                   ></textarea>
                 </div>
 
+                <!-- 4. 副標題描述文案 -->
                 <div>
                   <label class="form-label text-secondary mb-1">副標題描述文案</label>
-                  <input v-model="bannerForm.subtitle" type="text" class="form-control form-control-sm" placeholder="例如：全館冬季新品結帳享免運，滿額贈羊毛圍巾。" />
+                  <input v-model="bannerForm.subtitle" type="text" class="form-control form-control-sm" placeholder="例如：全館冬季新品結帳享免運，滿額 NT$ 2,500 再贈精緻羊毛圍巾。" />
                 </div>
 
-                <div class="row g-2">
-                  <div class="col-4">
-                    <label class="form-label text-secondary mb-1">按鈕文字 *</label>
-                    <input v-model="bannerForm.buttonText" required type="text" class="form-control form-control-sm" placeholder="例如：探索全系列" />
+                <!-- 5. 按鈕、連結類型與目標值 (附動態選項與清晰指引) -->
+                <div class="border rounded-3 p-3 bg-white">
+                  <label class="form-label fw-bold text-dark mb-2">按鈕點擊跳轉行為設定</label>
+                  
+                  <div class="row g-2.5">
+                    <!-- 按鈕文字 -->
+                    <div class="col-12 col-sm-4">
+                      <label class="form-label text-muted mb-1" style="font-size: 11px;">按鈕文字 *</label>
+                      <input v-model="bannerForm.buttonText" required type="text" class="form-control form-control-sm" placeholder="例如：探索全系列" />
+                    </div>
+
+                    <!-- 連結類型選擇 -->
+                    <div class="col-12 col-sm-4">
+                      <label class="form-label text-muted mb-1" style="font-size: 11px;">連結類型 *</label>
+                      <select v-model="bannerForm.linkType" class="form-select form-select-sm font-monospace" @change="onLinkTypeChange">
+                        <option value="category">切換商品分類 (推薦)</option>
+                        <option value="path">內部頁面路徑</option>
+                        <option value="external">外部新分頁連結</option>
+                      </select>
+                    </div>
+
+                    <!-- 連結目標值：根據類型自動切換輸入模式 -->
+                    <div class="col-12 col-sm-4">
+                      <label class="form-label text-muted mb-1" style="font-size: 11px;">
+                        {{ bannerForm.linkType === 'category' ? '選擇對應品類 *' : bannerForm.linkType === 'external' ? '外部完整網址 *' : '站內路由路徑 *' }}
+                      </label>
+
+                      <!-- 情境 1：若是切換分類，直接提供下拉選單防呆 -->
+                      <select
+                        v-if="bannerForm.linkType === 'category'"
+                        v-model="bannerForm.linkUrl"
+                        class="form-select form-select-sm font-monospace"
+                        required
+                      >
+                        <option v-for="c in productStore.categories" :key="c" :value="c">
+                          {{ c }}
+                        </option>
+                      </select>
+
+                      <!-- 情境 2：內部路由 -->
+                      <input
+                        v-else-if="bannerForm.linkType === 'path'"
+                        v-model="bannerForm.linkUrl"
+                        required
+                        type="text"
+                        class="form-control form-control-sm font-monospace"
+                        placeholder="例如：/profile 或 /product/1"
+                      />
+
+                      <!-- 情境 3：外部網址 -->
+                      <input
+                        v-else
+                        v-model="bannerForm.linkUrl"
+                        required
+                        type="url"
+                        class="form-control form-control-sm font-monospace"
+                        placeholder="https://..."
+                      />
+                    </div>
                   </div>
-                  <div class="col-4">
-                    <label class="form-label text-secondary mb-1">連結類型</label>
-                    <select v-model="bannerForm.linkType" class="form-select form-select-sm font-monospace">
-                      <option value="category">切換商品分類</option>
-                      <option value="path">內部頁面路徑</option>
-                      <option value="external">外部新分頁連結</option>
-                    </select>
-                  </div>
-                  <div class="col-4">
-                    <label class="form-label text-secondary mb-1">連結目標值 *</label>
-                    <input v-model="bannerForm.linkUrl" required type="text" class="form-control form-control-sm font-monospace" placeholder="例如：Outer 外套 或 /profile" />
+
+                  <!-- 貼心動態提示說明 -->
+                  <div class="mt-2 text-muted" style="font-size: 11px;">
+                    <span v-if="bannerForm.linkType === 'category'">
+                      💡 顧客點擊按鈕後，首頁將自動篩選【<strong>{{ bannerForm.linkUrl }}</strong>】品類並平滑滾動至商品清單。
+                    </span>
+                    <span v-else-if="bannerForm.linkType === 'path'">
+                      💡 顧客點擊按鈕後，將在站內無縫切換到路徑【<strong>{{ bannerForm.linkUrl }}</strong>】。
+                    </span>
+                    <span v-else>
+                      💡 顧客點擊按鈕後，將在瀏覽器以新分頁開啟外部網址【<strong>{{ bannerForm.linkUrl }}</strong>】。
+                    </span>
                   </div>
                 </div>
 
+                <!-- 上架開關 -->
                 <div class="form-check mt-1">
                   <input v-model="bannerForm.isActive" class="form-check-input" type="checkbox" id="bannerActiveCheck" />
                   <label class="form-check-label text-secondary" for="bannerActiveCheck">
-                    立即啟用並在首頁輪播中播放
+                    立即啟用並在首頁輪播中播放此項目
                   </label>
                 </div>
 
-                <div class="pt-3">
-                  <button type="submit" class="btn btn-primary w-100 rounded-pill py-2.5 fw-bold">
+                <div class="pt-2">
+                  <button type="submit" class="btn btn-primary w-100 rounded-pill py-2.5 fw-bold shadow-xs">
                     {{ isEditing ? '儲存修改並同步前台' : '確認建立輪播並上線' }}
                   </button>
                 </div>
@@ -395,9 +510,11 @@
 <script setup>
 import { ref, reactive, computed } from 'vue'
 import { useMarketingStore } from '../../stores/marketingStore'
+import { useProductStore } from '../../stores/productStore'
 import { useAdminStore } from '../../stores/adminStore'
 
 const marketingStore = useMarketingStore()
+const productStore = useProductStore()
 const adminStore = useAdminStore()
 
 // ==================== 1. 主分類選單 CMS 狀態 ====================
@@ -472,6 +589,7 @@ const handleDeleteCat = (idx, cat) => {
 const showModal = ref(false)
 const isEditing = ref(false)
 const currentEditId = ref(null)
+const imageSourceMode = ref('upload') // 'upload' | 'url'
 
 const bannerForm = reactive({
   tag: '',
@@ -490,15 +608,44 @@ const sortedBanners = computed(() => {
   return [...marketingStore.banners].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
 })
 
+// 本機檔案選取並讀取為 Base64
+const handleImageFileUpload = (e) => {
+  const file = e.target.files?.[0]
+  if (!file) return
+
+  if (!file.type.startsWith('image/')) {
+    alert('請上傳有效的圖片格式檔案（JPG、PNG、WebP）！')
+    return
+  }
+
+  const reader = new FileReader()
+  reader.onload = (event) => {
+    bannerForm.image = event.target.result
+  }
+  reader.readAsDataURL(file)
+}
+
+// 切換連結類型時賦予友善預設值
+const onLinkTypeChange = () => {
+  if (bannerForm.linkType === 'category') {
+    bannerForm.linkUrl = productStore.categories[0] || 'Top 上衣'
+  } else if (bannerForm.linkType === 'path') {
+    bannerForm.linkUrl = '/profile'
+  } else if (bannerForm.linkType === 'external') {
+    bannerForm.linkUrl = 'https://www.instagram.com/'
+  }
+}
+
 const openCreateBannerModal = () => {
   isEditing.value = false
   currentEditId.value = null
+  imageSourceMode.value = 'upload'
   bannerForm.tag = 'NEW ARRIVAL'
   bannerForm.title = '正韓極簡風格穿搭特輯'
   bannerForm.subtitle = '全館免運門檻 NT$ 1,500，立即挑選你的質感日常。'
   bannerForm.buttonText = '探索新品'
   bannerForm.linkType = 'category'
-  bannerForm.linkUrl = 'Top 上衣'
+  bannerForm.linkUrl = productStore.categories[0] || 'Top 上衣'
   bannerForm.image = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1600&q=80'
   bannerForm.sortOrder = marketingStore.banners.length + 1
   bannerForm.isActive = true
@@ -509,6 +656,8 @@ const openCreateBannerModal = () => {
 const openEditBannerModal = (banner) => {
   isEditing.value = true
   currentEditId.value = banner.id
+  // 若原本是 Base64 則預設為上傳模式，否則為網址模式
+  imageSourceMode.value = banner.image?.startsWith('data:image') ? 'upload' : 'url'
   bannerForm.tag = banner.tag
   bannerForm.title = banner.title
   bannerForm.subtitle = banner.subtitle
@@ -523,11 +672,16 @@ const openEditBannerModal = (banner) => {
 }
 
 const saveBanner = () => {
+  if (!bannerForm.image) {
+    alert('請上傳圖片或輸入圖片網址！')
+    return
+  }
+
   bannerForm.isExternal = bannerForm.linkType === 'external'
 
   if (isEditing.value && currentEditId.value) {
     marketingStore.updateBanner(currentEditId.value, bannerForm)
-    adminStore.addAuditLog('更新首頁輪播', `修改輪播 ID #${currentEditId.value}`)
+    adminStore.addAuditLog('更新首頁輪播', `修改輪播 ID #${currentEditId.value}【${bannerForm.title.slice(0, 15)}...】`)
     alert('輪播資料已儲存並同步至前台！')
   } else {
     marketingStore.addBanner(bannerForm)

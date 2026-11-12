@@ -292,3 +292,22 @@ h1, h2, h3, h4, h5, h6 {
   background-color: rgba(35, 30, 26, 0.55);
   backdrop-filter: blur(4px);
 }
+
+/* ==========================================================================
+   手機端底部安全留白 (Mobile Safe Area Spacing)
+   ========================================================================== */
+@media (max-width: 991.98px) {
+  /* 前台：避免內容被 BottomNav 遮擋 */
+  body {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  /* 後台系統：雖然沒有前台 BottomNav，但必須為手機底部保留呼吸空間與安全邊距 */
+  body:has(.admin-layout-root) {
+    padding-bottom: 0 !important;
+  }
+
+  .admin-layout-root main {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
